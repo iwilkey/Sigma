@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
@@ -26,29 +27,38 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
 
   static const bool S_STREAM_FRAME = true;
 
-  late final Completer<void> _initialized = Completer<void>();
+  late final Completer<void>  _initialized = Completer<void>();
+  late final FaceMeshPipeline _pipeline;
+  late final FaceMeshRenderable _meshRenderable;
 
-  late final FaceMeshPipeline pipeline;
-
-  FaceMesh? _latestMesh;
-
+  FaceMesh?         _latestMesh;
   CameraController? _controller;
-
-  bool _streaming = false;
+  bool              _streaming = false;
 
   @override
   void initState() {
     super.initState();
     _initCamera();
-    pipeline = FaceMeshPipeline(
+    _meshRenderable = FaceMeshRenderable(
+      null,
+      dt: true,
+      dp: true,
+      constructionTrianglesPerFrame: 20,
+      destructionTrianglesPerFrame: 120,
+      partialTriangle: true,
+    );
+    _pipeline = FaceMeshPipeline(
       delegate: FaceMeshDelegate.xnnpack,
       rotationDegrees: 0,
       mirrorHorizontal: false
     );
-    pipeline.start();
-    pipeline.stream.listen((final FaceMesh points) {
-      _latestMesh = points;
+    _pipeline.start();
+    _pipeline.stream.listen((final FaceMesh mesh) {
+      _latestMesh = mesh;
+      _meshRenderable.tick(mesh);
       setState((){});
+      //print(1.0 / (1.0 + math.exp(-mesh.score)));
+
     });
   }
 
@@ -90,12 +100,12 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
   }
 
   void _onFrame(final CameraImage imageData) {
-    pipeline.onFrameBgra8888(imageData);
+    _pipeline.onFrameBgra8888(imageData);
   }
 
   @override
   void dispose() {
-    pipeline.stop();
+    _pipeline.stop();
     final CameraController? c = _controller;
     if(c != null) {
       c.unlockCaptureOrientation();
@@ -135,8 +145,9 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
               ] else ...[
                 if(_controller != null && _controller!.value.isInitialized)
                   _renderImageFeed(_controller!),
-                if(_latestMesh != null)
-                  Gfx.render(FaceMeshRenderable(_latestMesh!, dt: true, ti: _latestMesh!.triangleIndices)),
+                if(_latestMesh != null) ...[
+                  Gfx.render(_meshRenderable),
+                ],
                 Positioned(
                   left: 0,
                   right: 0,

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
+/// Author: Ian Wilkey and Barney Jin
 final class CaptureButton extends StatelessWidget {
   
-  const CaptureButton({super.key, required this.onPressed});
+  const CaptureButton({
+    super.key, 
+    required this.onPressed
+  });
 
   final VoidCallback onPressed;
 
@@ -36,4 +40,5 @@ final class CaptureButton extends StatelessWidget {
       ),
     );
   }
+  
 }

@@ -42,35 +42,35 @@ CustomTransitionPage<void> sheetPage({
     reverseTransitionDuration: const Duration(milliseconds: 420),
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      final curved = CurvedAnimation(
+      final CurvedAnimation c = CurvedAnimation(
         parent: animation,
         curve: Curves.easeOutCubic,
         reverseCurve: Curves.easeInCubic,
       );
-      final slide = Tween<Offset>(
+      final Animatable<Offset> s = Tween<Offset>(
         begin: const Offset(0, 1.0),
         end: Offset.zero,
       ).chain(CurveTween(curve: Curves.easeOutCubic));
-      final scale = Tween<double>(
+      final Animatable<double> sc = Tween<double>(
         begin: 0.98,
         end: 1.0,
       ).chain(CurveTween(curve: Curves.easeOutCubic));
-      final scrimOpacity = Tween<double>(
+      final Animation<double> so = Tween<double>(
         begin: 0.0,
         end: 0.28,
-      ).animate(curved);
+      ).animate(c);
       return Stack(
         children: [
           IgnorePointer(
             child: FadeTransition(
-              opacity: scrimOpacity,
+              opacity: so,
               child: const ColoredBox(color: Colors.black),
             ),
           ),
           SlideTransition(
-            position: curved.drive(slide),
+            position: c.drive(s),
             child: ScaleTransition(
-              scale: curved.drive(scale),
+              scale: c.drive(sc),
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: ClipRRect(

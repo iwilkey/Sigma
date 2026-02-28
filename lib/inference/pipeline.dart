@@ -11,23 +11,23 @@ import 'package:sigma/inference/face_mesh.dart';
 final class FaceMeshPipeline {
 
   final FaceMeshDelegate delegate;
-  final int rotationDegrees;
-  final bool mirrorHorizontal;
+  final int              rotationDegrees;
+  final bool             mirrorHorizontal;
   
   final StreamController<FaceMesh> _out = StreamController<FaceMesh>.broadcast();
 
-  FaceMeshProcessor? _processor;
-  FaceMeshStreamProcessor? _streamProcessor;
-  StreamController<FaceMeshImage>? _bgraController;
+  FaceMeshProcessor?                  _processor;
+  FaceMeshStreamProcessor?            _streamProcessor;
+  StreamController<FaceMeshImage>?    _bgraController;
   StreamSubscription<FaceMeshResult>? _sub;
   
   List<List<int>>? _cachedTriangleIndices;
-  bool _inflight = false;
+  bool             _inflight = false;
 
   Uint8List? _pendingBgra;
-  int? _pendingBytesPerRow;
-  int? _pendingWidth;
-  int? _pendingHeight;
+  int?       _pendingBytesPerRow;
+  int?       _pendingWidth;
+  int?       _pendingHeight;
 
   bool             get isStarted => _processor != null;
   Stream<FaceMesh> get stream    => _out.stream;
@@ -56,25 +56,25 @@ final class FaceMeshPipeline {
   }
 
   void onFrameBgra8888(final CameraImage image) {
-    final StreamController<FaceMeshImage>? controller = _bgraController;
-    if(controller == null || controller.isClosed) return;
-    if(!controller.hasListener) return;
+    final StreamController<FaceMeshImage>? c = _bgraController;
+    if(c == null || c.isClosed) return;
+    if(!c.hasListener) return;
     if(_inflight) return;
     if(image.planes.isEmpty) return;
-    final Plane plane = image.planes.first;
-    _pendingBgra = Uint8List.fromList(plane.bytes);
-    _pendingBytesPerRow = plane.bytesPerRow;
+    final Plane p = image.planes.first;
+    _pendingBgra = Uint8List.fromList(p.bytes);
+    _pendingBytesPerRow = p.bytesPerRow;
     _pendingWidth = image.width;
     _pendingHeight = image.height;
     _inflight = true;
-    final FaceMeshImage fmImage = FaceMeshImage(
-      pixels: plane.bytes,
+    final FaceMeshImage fm = FaceMeshImage(
+      pixels: p.bytes,
       width: image.width,
       height: image.height,
       pixelFormat: FaceMeshPixelFormat.bgra,
-      bytesPerRow: plane.bytesPerRow,
+      bytesPerRow: p.bytesPerRow,
     );
-    controller.add(fmImage);
+    c.add(fm);
   }
 
   Future<void> stop() async {

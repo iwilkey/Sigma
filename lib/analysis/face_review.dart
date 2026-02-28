@@ -9,6 +9,7 @@ import 'package:sigma/analysis/face_processor.dart';
 import 'package:sigma/inference/face_mesh.dart';
 import 'package:sigma/rendering/gfx.dart';
 import 'package:sigma/rendering/renderables/blur_dots_background_renderable.dart';
+import 'package:sigma/share/share_sheet.dart';
 
 /// Author: Ian Wilkey and Barney Jin
 final class FaceReviewState extends StatefulWidget {
@@ -111,6 +112,20 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
     _image?.dispose();
     _ticker.dispose();
     super.dispose();
+  }
+
+  void _openShareSheet() {
+    final FaceMetrics? m = _metrics;
+    if (m == null) return;
+    ShareSheet.show(
+      context,
+      metrics: m,
+      bgraPixels: widget.mesh.bgraPixels!,
+      imageWidth: widget.mesh.imageWidth,
+      imageHeight: widget.mesh.imageHeight,
+      bytesPerRow: widget.mesh.bytesPerRow,
+      aiInsight: _displayedText,
+    );
   }
 
   @override
@@ -285,6 +300,27 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                       ),
                     ],
                   ),
+          ),
+          // ── Share button (top-right, appears when AI insight is ready) ──
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 12,
+            right: 20,
+            child: AnimatedOpacity(
+              opacity: _metrics != null ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 400),
+              child: GestureDetector(
+                onTap: _openShareSheet,
+                child: Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.25), width: 1),
+                  ),
+                  child: const Icon(Icons.ios_share_rounded, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
           ),
         ],
       ),

@@ -87,6 +87,8 @@ class FaceProcessor {
     // ==========================================
     // Assume vertical midline roughly passes through nose bridge (5)
     final midlineX = midlinePoint.dx;
+    // faceWidth needed early for symmetry normalization
+    final faceWidth = distance(faceLeft, faceRight);
 
     // Reflect right point across the midline
     final reflectedRightEyeOuterX = 2 * midlineX - rightEyeOuter.dx;
@@ -95,14 +97,16 @@ class FaceProcessor {
     final reflectionPoint = Offset(reflectedRightEyeOuterX, rightEyeOuter.dy);
     final symmetryDistance = (leftEyeOuter - reflectionPoint).distance;
 
-    // Score from 0-100 where 0 distance is 100% symmetry
-    // (Scaled down slightly since we are operating in high-magnitude pixel Offsets now rather than [0,1])
-    final overallSymmetryScore = clampDouble(100.0 - (symmetryDistance * 2), 0, 100);
+    // Score from 0-100: normalize distance by face width so the result is
+    // scale-invariant regardless of canonical space resolution.
+    // d/faceWidth ≈ 0 for perfect symmetry; ×2 gives a sensitivity factor
+    // so that 50% misalignment relative to face width = 0 score.
+    final normalizedSymD = (faceWidth > 0) ? symmetryDistance / faceWidth : 0.0;
+    final overallSymmetryScore = clampDouble(100.0 * (1.0 - normalizedSymD * 4), 0, 100);
 
     // ==========================================
     // B. The Golden Ratio 
     // ==========================================
-    final faceWidth = distance(faceLeft, faceRight);
     final faceHeight = distance(hairline, chin);
     
     // Horizontal: Face Width : Total Eye span + spacing
@@ -122,8 +126,11 @@ class FaceProcessor {
     // ==========================================
     // C. The "Five Eyes" Rule
     // ==========================================
+    // Average both eye widths to avoid asymmetry bias from using one eye alone.
     final innerEyeDistance = distance(leftEyeInner, rightEyeInner);
-    final oneEyeWidth = distance(leftEyeOuter, leftEyeInner);
+    final leftEyeWidth  = distance(leftEyeOuter, leftEyeInner);
+    final rightEyeWidth = distance(rightEyeOuter, rightEyeInner);
+    final oneEyeWidth   = (leftEyeWidth + rightEyeWidth) / 2;
     final fiveEyesRatio = (oneEyeWidth > 0) ? innerEyeDistance / oneEyeWidth : 0.0;
 
     // ==========================================
@@ -141,9 +148,15 @@ class FaceProcessor {
     // ==========================================
     // E. Facial Thirds String Format
     // ==========================================
-    final midRatio = upperSection > 0 ? midSection / upperSection : 0.0;
-    final lowerRatio = upperSection > 0 ? lowerSection / upperSection : 0.0;
-    final facialThirdsRatio = "1:${midRatio.toStringAsFixed(1)}:${lowerRatio.toStringAsFixed(1)}";
+    // Normalize each section to the total face height (true thirds representation).
+    // Ideal: each section is 1/3 of total, so each proportion ≈ 0.333.
+    // Display as N:N:N where each N = section/min(sections) for easy comparison.
+    final minSection = [upperSection, midSection, lowerSection].reduce(min);
+    final thirdsBase = minSection > 0 ? minSection : 1.0;
+    final String facialThirdsRatio =
+      "${(upperSection / thirdsBase).toStringAsFixed(1)}:"
+      "${(midSection  / thirdsBase).toStringAsFixed(1)}:"
+      "${(lowerSection/ thirdsBase).toStringAsFixed(1)}";
 
     // ==========================================
     // F. Lip Volume

@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sigma/capture/capture.dart';
@@ -91,14 +92,49 @@ CustomTransitionPage<void> sheetPage({
   );
 }
 
-final class FaceReviewState extends StatelessWidget {
+final class FaceReviewState extends StatefulWidget {
   final FaceMesh mesh;
   const FaceReviewState({super.key, required this.mesh});
+  @override
+  State<FaceReviewState> createState() => _FaceReviewStateState();
+}
+
+final class _FaceReviewStateState extends State<FaceReviewState> {
+  ui.Image? _image;
+  FaceMetrics? _metrics;
+
+  @override
+  void initState() {
+    super.initState();
+    _metrics = FaceProcessor.processLandmarks(
+      widget.mesh.points,
+      imageSize: Size(widget.mesh.imageWidth.toDouble(), widget.mesh.imageHeight.toDouble()),
+    );
+    _decodeImage();
+  }
+
+  void _decodeImage() {
+    ui.decodeImageFromPixels(
+      widget.mesh.bgraPixels,
+      widget.mesh.imageWidth,
+      widget.mesh.imageHeight,
+      ui.PixelFormat.bgra8888,
+      (ui.Image img) {
+        if (mounted) setState(() => _image = img);
+      },
+      rowBytes: widget.mesh.bytesPerRow,
+    );
+  }
+
+  @override
+  void dispose() {
+    _image?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Process the coordinates off the camera capture immediately
-    final FaceMetrics? metrics = FaceProcessor.processLandmarks(mesh.points);
+    final FaceMetrics? metrics = _metrics;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F13),
@@ -107,6 +143,11 @@ final class FaceReviewState extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => context.pop(),
+          tooltip: 'Recapture',
+        ),
       ),
       body: metrics == null
           ? const Center(child: Text("Error analyzing facial topology.", style: TextStyle(color: Colors.white)))
@@ -142,24 +183,12 @@ final class FaceReviewState extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: Center(
-          child: AspectRatio(
-            aspectRatio: mesh.imageWidth / mesh.imageHeight,
-            child: Stack(
-              children: [
-                // Display the points mapped out on Canvas
-                Positioned.fill(
-                  child: RepaintBoundary(
-                    child: CustomPaint(
-                      painter: FaceMeshPainter(
-                        metrics: metrics,
-                        imageSize: Size(mesh.imageWidth.toDouble(), mesh.imageHeight.toDouble()),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            child: AspectRatio(
+              aspectRatio: widget.mesh.imageWidth / widget.mesh.imageHeight,
+              child: _image != null
+                  ? RawImage(image: _image, fit: BoxFit.fill)
+                  : const Center(child: CircularProgressIndicator(color: Color(0xFF00FFCC))),
             ),
-          ),
         ),
       ),
     );
@@ -228,7 +257,7 @@ final class FaceReviewState extends StatelessWidget {
         color: isHero ? const Color(0xFF00FFCC).withValues(alpha: 0.1) : const Color(0xFF1E1E24),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-           color: isHero ? const Color(0xFF00FFCC).withValues(alpha: 0.5) : const Color(0x1AFFFFFF), 
+           color: isHero ? const Color(0xFF00FFCC).withValues(alpha: 0.5) : const Color(0x1AFFFFFF),
            width: 1
         ),
       ),

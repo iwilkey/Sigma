@@ -2,19 +2,39 @@ import 'dart:math';
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show ImageStreamListener, ImageInfo, ImageConfiguration, FileImage, Size;
+import 'package:flutter/painting.dart' show applyBoxFit, FittedSizes, BoxFit;
+import 'package:flutter/material.dart' show ImageStreamListener, ImageInfo, ImageConfiguration, FileImage, Alignment;
 import 'dart:ui' as ui show Image, ImageByteFormat;
-import 'dart:ui' show Offset, Size;
+import 'dart:ui' show Offset, Size, Rect;
 import 'package:mediapipe_face_mesh/mediapipe_face_mesh.dart';
 import 'face_metrics.dart';
 
 class FaceProcessor {
   /// Processes a list of 468 landmarks and calculates advanced facial metrics.
   /// Accepts native `Offset` objects directly mapped from an offline dataset or UI geometry.
-  static FaceMetrics? processLandmarks(List<Offset> landmarks) {
+  ///
+  /// [imageSize] — when provided, all points are normalized to a fixed 1000×1000
+  /// canonical space using the same BoxFit.contain mapping as [FaceMeshRenderable],
+  /// eliminating variance from different camera resolutions or face distances.
+  static FaceMetrics? processLandmarks(List<Offset> landmarks, {Size? imageSize}) {
     if (landmarks.isEmpty || landmarks.length < 468) {
       debugPrint('Expected at least 468 landmarks, got ${landmarks.length}.');
       return null;
+    }
+
+    // Normalize to a fixed canonical coordinate space so metrics are
+    // consistent regardless of camera resolution or face distance.
+    if (imageSize != null && imageSize.width > 0 && imageSize.height > 0) {
+      const Size canonical = Size(1000, 1000);
+      final FittedSizes f = applyBoxFit(BoxFit.contain, imageSize, canonical);
+      final Rect src = Alignment.center.inscribe(f.source, Offset.zero & imageSize);
+      final Rect dst = Alignment.center.inscribe(f.destination, Offset.zero & canonical);
+      final double sx = dst.width / src.width;
+      final double sy = dst.height / src.height;
+      landmarks = landmarks.map((Offset p) => Offset(
+        (p.dx - src.left) * sx + dst.left,
+        (p.dy - src.top) * sy + dst.top,
+      )).toList(growable: false);
     }
 
     // Helper to print exact pixel locations
@@ -224,7 +244,10 @@ class FaceProcessor {
         );
       }).toList();
 
-      return processLandmarks(physicalOffsets);
+      return processLandmarks(
+        physicalOffsets,
+        imageSize: Size(image.width.toDouble(), image.height.toDouble()),
+      );
     } catch (e) {
       debugPrint('Error detecting face meshes: $e');
       return null;

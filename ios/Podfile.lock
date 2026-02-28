@@ -1,28 +1,28 @@
 PODS:
-  - Flutter (1.0.0)
-  - image_picker_ios (0.0.1):
+  - camera_avfoundation (0.0.1):
     - Flutter
+  - Flutter (1.0.0)
   - mediapipe_face_mesh (0.0.1):
     - Flutter
 
 DEPENDENCIES:
+  - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
   - Flutter (from `Flutter`)
-  - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - mediapipe_face_mesh (from `.symlinks/plugins/mediapipe_face_mesh/ios`)
 
 EXTERNAL SOURCES:
+  camera_avfoundation:
+    :path: ".symlinks/plugins/camera_avfoundation/ios"
   Flutter:
     :path: Flutter
-  image_picker_ios:
-    :path: ".symlinks/plugins/image_picker_ios/ios"
   mediapipe_face_mesh:
     :path: ".symlinks/plugins/mediapipe_face_mesh/ios"
 
 SPEC CHECKSUMS:
+  camera_avfoundation: 769d252259fa21e39ada7399c9dc9c0921af8165
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  image_picker_ios: 4f2f91b01abdb52842a8e277617df877e40f905b
   mediapipe_face_mesh: 486b08a78691506e385e4eefa7e56c3768f04d23
 
-PODFILE CHECKSUM: 3b6db858c2ca83af82c9b1a2a6874fcbed345aaa
+PODFILE CHECKSUM: ef460edeecccea9f20c5f28ffa5f0a3e590b7549
 
 COCOAPODS: 1.16.2

@@ -5,7 +5,7 @@ import 'dart:ui';
 final class FaceMesh {
   final int             imageWidth;
   final int             imageHeight;
-  final Uint8List       bgraPixels;
+  final Uint8List?      bgraPixels;
   final int             bytesPerRow;
   final List<Offset>    points;
   final List<List<int>> triangleIndices;

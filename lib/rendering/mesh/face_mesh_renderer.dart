@@ -5,6 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:sigma/inference/face_mesh.dart';
 import 'package:sigma/rendering/renderable.dart';
 
+typedef MeshProgressTick = void Function({
+  required bool constructing,
+  required bool destructing,
+  required double progress, // 0..1
+});
+
 /// Author: Ian Wilkey and Barney Jin
 final class FaceMeshRenderable implements Renderable {
 
@@ -18,9 +24,15 @@ final class FaceMeshRenderable implements Renderable {
   final double constructionTrianglesPerFrame;
   final double destructionTrianglesPerFrame;
   final bool   partialTriangle;
+  final VoidCallback? onFullyConstructed;
+  final VoidCallback? onFullyDestructed;
+  final MeshProgressTick? onAnimating;
 
   double _triProgress       = 0.0;
   int    _lastTriangleCount = -1;
+
+  bool _wasFullyConstructed = false;
+  bool _wasFullyDestructed = true;
 
   late List<List<int>> _orderedTriangles = const [];
 
@@ -38,6 +50,9 @@ final class FaceMeshRenderable implements Renderable {
     this.constructionTrianglesPerFrame = 80.0,
     this.destructionTrianglesPerFrame = 120.0,
     this.partialTriangle = true,
+    required this.onFullyConstructed,
+    required this.onFullyDestructed,
+    required this.onAnimating
   }) : _mesh = initial;
 
   void tick(final FaceMesh? mesh) {
@@ -54,8 +69,38 @@ final class FaceMeshRenderable implements Renderable {
     if(_orderedTriangles.isEmpty) return;
     final double maxT = _orderedTriangles.length.toDouble();
     final double step = build ? constructionTrianglesPerFrame : destructionTrianglesPerFrame;
+    final double before = _triProgress;
     _triProgress += build ? step : -step;
     _triProgress = _triProgress.clamp(0.0, maxT);
+    final bool changed = _triProgress != before;
+    final bool constructing = build && changed;
+    final bool destructing = !build && changed;
+    final double progress01 = maxT <= 0 ? 0.0 : (_triProgress / maxT).clamp(0.0, 1.0);
+    if(onAnimating != null && (constructing || destructing)) {
+      onAnimating!(
+        constructing: constructing,
+        destructing: destructing,
+        progress: progress01,
+      );
+    }
+    final bool fullyConstructed = _triProgress >= maxT - 1e-9;
+    final bool fullyDestructed = _triProgress <= 1e-9;
+    if(fullyConstructed && !_wasFullyConstructed) {
+      onFullyConstructed?.call();
+    }
+    if(!fullyConstructed) {
+      _wasFullyConstructed = false;
+    } else {
+      _wasFullyConstructed = true;
+    }
+    if(fullyDestructed && !_wasFullyDestructed) {
+      onFullyDestructed?.call();
+    }
+    if(!fullyDestructed) {
+      _wasFullyDestructed = false;
+    } else {
+      _wasFullyDestructed = true;
+    }
     final Size iss = Size(m.imageWidth.toDouble(), m.imageHeight.toDouble());
     final mapper = _transform(iss: iss, ws: size, fit: fit);
     final List<Offset> mapped = List<Offset>.generate(

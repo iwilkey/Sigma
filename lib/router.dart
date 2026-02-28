@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:sigma/capture/capture.dart';
 import 'package:sigma/inference/face_mesh.dart';
 import 'package:sigma/analysis/face_processor.dart';
-import 'package:sigma/analysis/face_painter.dart';
 import 'package:sigma/analysis/face_metrics.dart';
 
 final GoRouter SIGMA_ROUTER = GoRouter(
@@ -115,7 +114,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> {
 
   void _decodeImage() {
     ui.decodeImageFromPixels(
-      widget.mesh.bgraPixels,
+      widget.mesh.bgraPixels!,
       widget.mesh.imageWidth,
       widget.mesh.imageHeight,
       ui.PixelFormat.bgra8888,

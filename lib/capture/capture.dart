@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:mediapipe_face_mesh/mediapipe_face_mesh.dart';
 import 'package:sigma/capture/ui/capture_button.dart';
+import 'package:sigma/capture/ui/turn_head_hint.dart';
 import 'package:sigma/inference/pipeline.dart';
 import 'package:sigma/rendering/gfx.dart';
 import 'package:sigma/inference/face_mesh.dart';
@@ -32,12 +34,18 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
 
   FaceMesh?         _latestMesh;
   CameraController? _controller;
+  bool              _canTakeImage = false;
   bool              _streaming = false;
+  Timer? _hintTimer;
+  bool _showTurnHint = false;
+
+  int t = 0;
 
   @override
   void initState() {
     super.initState();
     _initCamera();
+    _scheduleHintIfNeeded();
     _meshRenderable = FaceMeshRenderable(
       null,
       drawTriangles: true,
@@ -45,17 +53,40 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
       constructionTrianglesPerFrame: 20,
       destructionTrianglesPerFrame: 120,
       partialTriangle: true,
+      onFullyConstructed: () {
+        _canTakeImage = true;
+        _hideHint();
+        SchedulerBinding.instance.addPostFrameCallback((_) => setState((){}));
+        HapticFeedback.heavyImpact();
+      },
+      onFullyDestructed: () {
+        _canTakeImage = false;
+        _scheduleHintIfNeeded();
+        SchedulerBinding.instance.addPostFrameCallback((_) => setState((){}));
+      },
+      onAnimating: ({required constructing, required destructing, required progress}) {
+        _canTakeImage = false;
+        if(constructing) {
+          HapticFeedback.lightImpact();
+        }
+      },
     );
     _pipeline = FaceMeshPipeline(
-      delegate: FaceMeshDelegate.xnnpack,
+      delegate: FaceMeshDelegate.gpuV2,
       rotationDegrees: 0,
       mirrorHorizontal: false
     );
     _pipeline.start();
     _pipeline.stream.listen((final FaceMesh mesh) {
       _latestMesh = mesh;
-      _meshRenderable.tick(mesh);
-      setState((){});
+      if(mesh.bgraPixels != null) {
+        final FaceMesh? mesh = _latestMesh;
+        if(mesh == null) return;
+        widget.onCapturePressed(mesh);
+      } else {
+        _meshRenderable.tick(mesh);
+        setState((){});
+      }
     });
   }
 
@@ -103,6 +134,7 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
   @override
   void dispose() {
     _pipeline.stop();
+    _hintTimer?.cancel();
     final CameraController? c = _controller;
     if(c != null) {
       c.unlockCaptureOrientation();
@@ -151,13 +183,17 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
                   bottom: 36,
                   child: Center(
                     child: CaptureButton(
-                      onPressed: () {
-                        final FaceMesh? mesh = _latestMesh;
-                        if(mesh == null) return;
-                        widget.onCapturePressed(mesh);
-                      },
+                      onPressed: _canTakeImage ? () {
+                        _pipeline.requestPixelCapture();
+                      } : null,
                     ),
                   ),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: MediaQuery.of(context).padding.top,
+                  child: TurnHeadHint(visible: _showTurnHint),
                 ),
               ]
             ],
@@ -182,6 +218,23 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
         ),
       ),
     );
+  }
+
+  void _scheduleHintIfNeeded() {
+    _hintTimer?.cancel();
+    if(_canTakeImage) {
+      if(_showTurnHint) SchedulerBinding.instance.addPostFrameCallback((_) => setState((){_showTurnHint = false;}));
+      return;
+    }
+    _hintTimer = Timer(const Duration(seconds: 2), () {
+      if(!mounted) return;
+      if(!_canTakeImage) SchedulerBinding.instance.addPostFrameCallback((_) => setState((){_showTurnHint = true;}));
+    });
+  }
+
+  void _hideHint() {
+    _hintTimer?.cancel();
+    if(_showTurnHint) SchedulerBinding.instance.addPostFrameCallback((_) => setState((){_showTurnHint = false;}));
   }
 
 }

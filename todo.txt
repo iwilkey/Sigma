@@ -37,3 +37,10 @@ Barney:
         - symmetry, five-eye-rules, etc.
         - Render a post scan page.
 
+Disclaimer
+
+    - Welcome to Sigma (Logo)
+    - Talk about privacy; we're not storing your pictures
+    - Beauty is not Math
+    - Helps you find the best angle of yourself
+    - Instructions

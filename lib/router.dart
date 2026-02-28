@@ -6,10 +6,18 @@ import 'package:sigma/inference/face_mesh.dart';
 import 'package:sigma/analysis/face_processor.dart';
 import 'package:sigma/analysis/face_metrics.dart';
 import 'package:sigma/analysis/openai_service.dart';
+import 'package:sigma/onboarding/disclaimer.dart';
 
 final GoRouter SIGMA_ROUTER = GoRouter(
-  initialLocation: '/capture',
+  initialLocation: '/',
   routes: [
+    GoRoute(
+      path: '/',
+      pageBuilder: (context, state) => sheetPage(
+        state: state,
+        child: WelcomeScreen(nextRouteName: "/capture")
+      ),
+    ),
     GoRoute(
       path: '/capture',
       pageBuilder: (context, state) => sheetPage(
@@ -136,7 +144,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> {
     }
     final String? result = await OpenAIService.analyzePortrait(
       metrics: _metrics!,
-      bgraPixels: widget.mesh.bgraPixels,
+      bgraPixels: widget.mesh.bgraPixels!,
       imageWidth: widget.mesh.imageWidth,
       imageHeight: widget.mesh.imageHeight,
       bytesPerRow: widget.mesh.bytesPerRow,

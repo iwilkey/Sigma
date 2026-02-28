@@ -10,7 +10,7 @@ import 'package:sigma/capture/ui/turn_head_hint.dart';
 import 'package:sigma/inference/pipeline.dart';
 import 'package:sigma/rendering/gfx.dart';
 import 'package:sigma/inference/face_mesh.dart';
-import 'package:sigma/rendering/mesh/face_mesh_renderer.dart';
+import 'package:sigma/rendering/renderables/face_mesh_renderer.dart';
 
 /// Author: Ian Wilkey and Barney Jin
 final class FaceCaptureState extends StatefulWidget {

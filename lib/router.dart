@@ -8,11 +8,10 @@ final GoRouter SIGMA_ROUTER = GoRouter(
   routes: [
     GoRoute(
       path: '/capture',
-      pageBuilder: (context, state) => _fadeSlidePage(
+      pageBuilder: (context, state) => sheetPage(
         state: state,
         child: FaceCaptureState(
-          onCapturePressed: (FaceMesh mesh) {
-            // Push and pass mesh as "extra"
+          onCapturePressed: (final FaceMesh mesh) {
             context.push('/review', extra: mesh);
           },
         ),
@@ -22,7 +21,7 @@ final GoRouter SIGMA_ROUTER = GoRouter(
       path: '/review',
       pageBuilder: (context, state) {
         final FaceMesh mesh = state.extra as FaceMesh;
-        return _fadeSlidePage(
+        return sheetPage(
           state: state,
           child: FaceReviewState(mesh: mesh),
         );
@@ -31,25 +30,74 @@ final GoRouter SIGMA_ROUTER = GoRouter(
   ],
 );
 
-CustomTransitionPage<void> _fadeSlidePage({
+CustomTransitionPage<void> sheetPage({
   required GoRouterState state,
   required Widget child,
 }) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
+    opaque: false,
+    barrierDismissible: false,
+    transitionDuration: const Duration(milliseconds: 520),
+    reverseTransitionDuration: const Duration(milliseconds: 420),
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      final Animatable<Offset> offsetTween = Tween<Offset>(
-        begin: const Offset(0, 0.04),
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      final slide = Tween<Offset>(
+        begin: const Offset(0, 1.0),
         end: Offset.zero,
       ).chain(CurveTween(curve: Curves.easeOutCubic));
-      return FadeTransition(
-        opacity: animation,
-        child: SlideTransition(
-          position: animation.drive(offsetTween),
-          child: child,
-        ),
+      final scale = Tween<double>(
+        begin: 0.98,
+        end: 1.0,
+      ).chain(CurveTween(curve: Curves.easeOutCubic));
+      final scrimOpacity = Tween<double>(
+        begin: 0.0,
+        end: 0.28,
+      ).animate(curved);
+      return Stack(
+        children: [
+          IgnorePointer(
+            child: FadeTransition(
+              opacity: scrimOpacity,
+              child: const ColoredBox(color: Colors.black),
+            ),
+          ),
+          SlideTransition(
+            position: curved.drive(slide),
+            child: ScaleTransition(
+              scale: curved.drive(scale),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(22),
+                  ),
+                  child: child,
+                ),
+              ),
+            ),
+          ),
+        ],
       );
     },
   );
+}
+
+final class FaceReviewState extends StatelessWidget {
+  final FaceMesh mesh;
+  const FaceReviewState({super.key, required this.mesh});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Review')),
+      body: Center(
+        child: Text('Points: ${mesh.points.length}'),
+      ),
+    );
+  }
 }

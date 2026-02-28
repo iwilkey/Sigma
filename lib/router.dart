@@ -5,6 +5,7 @@ import 'package:sigma/capture/capture.dart';
 import 'package:sigma/inference/face_mesh.dart';
 import 'package:sigma/analysis/face_processor.dart';
 import 'package:sigma/analysis/face_metrics.dart';
+import 'package:sigma/analysis/openai_service.dart';
 
 final GoRouter SIGMA_ROUTER = GoRouter(
   initialLocation: '/capture',
@@ -101,6 +102,8 @@ final class FaceReviewState extends StatefulWidget {
 final class _FaceReviewStateState extends State<FaceReviewState> {
   ui.Image? _image;
   FaceMetrics? _metrics;
+  String? _aiResponse;
+  bool _aiLoading = true;
 
   @override
   void initState() {
@@ -110,6 +113,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> {
       imageSize: Size(widget.mesh.imageWidth.toDouble(), widget.mesh.imageHeight.toDouble()),
     );
     _decodeImage();
+    _fetchAIAnalysis();
   }
 
   void _decodeImage() {
@@ -123,6 +127,21 @@ final class _FaceReviewStateState extends State<FaceReviewState> {
       },
       rowBytes: widget.mesh.bytesPerRow,
     );
+  }
+
+  Future<void> _fetchAIAnalysis() async {
+    if (_metrics == null) {
+      setState(() => _aiLoading = false);
+      return;
+    }
+    final String? result = await OpenAIService.analyzePortrait(
+      metrics: _metrics!,
+      bgraPixels: widget.mesh.bgraPixels,
+      imageWidth: widget.mesh.imageWidth,
+      imageHeight: widget.mesh.imageHeight,
+      bytesPerRow: widget.mesh.bytesPerRow,
+    );
+    if (mounted) setState(() { _aiResponse = result; _aiLoading = false; });
   }
 
   @override
@@ -197,6 +216,9 @@ final class _FaceReviewStateState extends State<FaceReviewState> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // AI Insight card
+        _buildAICard(),
+        const SizedBox(height: 12),
         _buildMetricCard(
           title: "Symmetry Match",
           description: "Perceived reflection alignment",
@@ -239,6 +261,74 @@ final class _FaceReviewStateState extends State<FaceReviewState> {
         ),
         const SizedBox(height: 32),
       ],
+    );
+  }
+
+  Widget _buildAICard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF7B2FFF).withValues(alpha: 0.15),
+            const Color(0xFF00FFCC).withValues(alpha: 0.08),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF7B2FFF).withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF7B2FFF).withValues(alpha: 0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: const Text('✦', style: TextStyle(fontSize: 16, color: Colors.white)),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'AI Portrait Analysis',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+              ),
+              const Spacer(),
+              if (_aiLoading)
+                const SizedBox(
+                  width: 18, height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7B2FFF)),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_aiLoading)
+            const Text(
+              'GPT-4o is analyzing your portrait...',
+              style: TextStyle(color: Colors.white54, fontSize: 14, fontStyle: FontStyle.italic),
+            )
+          else if (_aiResponse != null)
+            Text(
+              _aiResponse!,
+              style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.5),
+            )
+          else
+            const Text(
+              'Unable to reach GPT-4o. Check your API key and network connection.',
+              style: TextStyle(color: Colors.redAccent, fontSize: 13),
+            ),
+        ],
+      ),
     );
   }
 

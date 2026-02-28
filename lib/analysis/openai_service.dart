@@ -14,7 +14,7 @@ const String _kOpenAIKey = 'sk-proj-Xp2zgfI8kc93miSgFmrrdQs7DgUjK2czzci2EG5Evwy7
 
 /// Set to [true] during UI development to skip the API call entirely.
 /// Flip to [false] to re-enable live GPT-4o-mini responses.
-const bool _kMockMode = false;
+const bool kMockMode = false;
 
 const String kMockResponse =
   'The clarity in your eyes immediately draws the viewer in — there is a quiet '
@@ -98,7 +98,7 @@ final class OpenAIService {
     '    it places this person in (e.g. "Your Classical Timelessness places you in the tradition of '
     '    Renaissance portraiture" or "Your Contemporary Photographic Appeal is exactly what makes '
     '    modern editorial photography striking"); '
-    '(3) Tip — one style or lighting suggestion that amplifies their natural character. '
+    '(3) Tip — one style, hair or facial hair, or makeup suggestion that amplifies their natural character. '
     'Never say "low", "poor", "off", or "asymmetrical". Max 3 sentences. '
     'IMPORTANT: Do NOT write section headers or bold labels like **Hook**, **Harmony**, or **Tip** — write flowing prose only.';
 
@@ -111,7 +111,8 @@ final class OpenAIService {
     required int imageHeight,
     required int bytesPerRow,
   }) async {
-    if (_kMockMode) {
+    // ── Mock mode: skip API call during UI development ──
+    if (kMockMode) {
       await Future<void>.delayed(const Duration(milliseconds: 1500));
       return kMockResponse;
     }
@@ -120,9 +121,16 @@ final class OpenAIService {
       // 1. Convert BGRA → RGBA for the 'image' package
       final Uint8List rgba = _bgraToRgba(bgraPixels, imageWidth, imageHeight, bytesPerRow);
 
-      // 2. Decode → Resize to 512px (Lower token cost) → Encode JPEG
-      final img.Image? original = img.decodeImage(rgba);
-      if (original == null) return null;
+      // 2. Decode → Resize to 512px (lower token cost) → Encode JPEG
+      // Must use Image.fromBytes — decodeImage only handles compressed formats (PNG/JPEG),
+      // not the raw RGBA pixel buffer produced by _bgraToRgba.
+      final img.Image original = img.Image.fromBytes(
+        width: imageWidth,
+        height: imageHeight,
+        bytes: rgba.buffer,
+        format: img.Format.uint8,
+        numChannels: 4,
+      );
 
       final img.Image resized = original.width >= original.height
           ? img.copyResize(original, width: 512)

@@ -203,7 +203,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
   FaceMetrics? _metrics;
   String _displayedText = '';
   Timer? _typewriter;
-  final Set<String> _expanded = {};
+  bool _showContent = false;
 
   @override
   void initState() {
@@ -352,7 +352,8 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                   value: "${metrics.overallSymmetry.toStringAsFixed(1)}%",
                                   trailingHint: "Ideal 100%",
                                   icon: Icons.balance_rounded,
-                                  emphasize: true,
+                                  explanation: 'Symmetry measures how closely your left and right halves mirror each other (100% = perfect). '
+                                    '${metrics.overallSymmetry >= 90 ? "Your ${metrics.overallSymmetry.toStringAsFixed(1)}% is top-tier — faces above 90% are perceived as classically balanced." : metrics.overallSymmetry >= 80 ? "Your ${metrics.overallSymmetry.toStringAsFixed(1)}% is above the human average of ~85%, reflecting a graceful, natural balance." : "Your ${metrics.overallSymmetry.toStringAsFixed(1)}% gives your face expressive uniqueness — distinct character cameras often love."}',
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -364,8 +365,10 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                   subtitle: "Eye expression angle",
                                   value:
                                       "${metrics.averageCanthalTilt > 0 ? '+' : ''}${metrics.averageCanthalTilt.toStringAsFixed(1)}°",
-                                  trailingHint: "Slight positive",
+                                  trailingHint: "Ideal +3° – +5°",
                                   icon: Icons.visibility_rounded,
+                                  explanation: 'Canthal tilt is the angle between inner and outer eye corners. Positive = upturned, negative = downturned. Ideal: +3° to +5°. '
+                                    '${metrics.averageCanthalTilt >= 3 ? "Your +${metrics.averageCanthalTilt.toStringAsFixed(1)}° is ideal — upturned corners read as alert and attractive." : metrics.averageCanthalTilt >= 0 ? "Your ${metrics.averageCanthalTilt.toStringAsFixed(1)}° is neutral-to-positive — an open, approachable expression." : "Your ${metrics.averageCanthalTilt.toStringAsFixed(1)}° gives a deep, soulful eye shape many find uniquely alluring."}',
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -378,6 +381,8 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                   value: metrics.facialThirdsRatio,
                                   trailingHint: "Ideal 1:1:1",
                                   icon: Icons.view_agenda_rounded,
+                                  explanation: 'Divided into three zones: hairline→brow (upper), brow→nose (mid), nose→chin (lower). Ideal is 1:1:1. '
+                                    'Your ratio is ${metrics.facialThirdsRatio}. Minor variation is normal and often adds character.',
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -390,6 +395,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                   value: metrics.lipVolumeRatio,
                                   trailingHint: "Ideal 1:1.6",
                                   icon: Icons.face_retouching_natural_rounded,
+                                  explanation: 'Compares upper to lower lip height. Ideal is 1:1.6 (fuller lower lip). Your ratio: ${metrics.lipVolumeRatio}.',
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -402,6 +408,8 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                   value: metrics.horizontalGoldenRatio.toStringAsFixed(3),
                                   trailingHint: "Ideal 1.618",
                                   icon: Icons.aspect_ratio_rounded,
+                                  explanation: 'The golden ratio (φ = 1.618) measures face width relative to eye span. Your score: ${metrics.horizontalGoldenRatio.toStringAsFixed(3)}. '
+                                    '${(metrics.horizontalGoldenRatio - 1.618).abs() <= 0.05 ? "Remarkably close to the golden standard." : (metrics.horizontalGoldenRatio - 1.618).abs() <= 0.15 ? "Within a natural and attractive range." : "Distinctive proportions — often the foundation of a striking look."}',
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -532,68 +540,15 @@ final class _CircularPortraitCard extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricsDashboard(FaceMetrics metrics) {
-    final double sym = metrics.overallSymmetry;
-    final double ct  = metrics.averageCanthalTilt;
-    final double gr  = metrics.horizontalGoldenRatio;
-    final double fe  = metrics.fiveEyesRatio;
-    final List<String> lp = metrics.lipVolumeRatio.split(':');
-    final double lv = lp.length == 2 ? (double.tryParse(lp[1]) ?? 1.0) : 1.0;
+}
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildAICard(),
-        const SizedBox(height: 12),
-        _buildMetricCard(
-          id: 'sym', title: 'Symmetry Match', description: 'Perceived reflection alignment',
-          value: '${sym.toStringAsFixed(1)}%', ideal: '100%', icon: Icons.balance, isHero: true,
-          explanation: 'Symmetry measures how closely your left and right halves mirror each other (100% = perfect). '
-            '${sym >= 90 ? 'Your ${sym.toStringAsFixed(1)}% is top-tier — faces above 90% are perceived as classically balanced and harmonious.' : sym >= 80 ? 'Your ${sym.toStringAsFixed(1)}% is above the human average of ~85%, reflecting a graceful, natural balance.' : 'Your ${sym.toStringAsFixed(1)}% gives your face expressive uniqueness — distinct character that cameras often love.'}',
-        ),
-        const SizedBox(height: 12),
-        _buildMetricCard(
-          id: 'ct', title: 'Canthal Tilt', description: 'Eye expression and biological energy angle',
-          value: '${ct > 0 ? '+' : ''}${ct.toStringAsFixed(1)}°', ideal: '+3° – +5°',
-          icon: Icons.remove_red_eye_outlined,
-          explanation: 'Canthal tilt is the angle between inner and outer eye corners. Positive = upturned ("hunter eyes"), negative = downturned (softer). Ideal: +3° to +5°. '
-            '${ct >= 3 ? 'Your +${ct.toStringAsFixed(1)}° falls in the ideal window — upturned corners read as alert and aesthetically attractive.' : ct >= 0 ? 'Your ${ct.toStringAsFixed(1)}° is neutral-to-positive — an open, approachable expression.' : 'Your ${ct.toStringAsFixed(1)}° gives a deep, soulful eye shape that many find uniquely alluring.'}',
-        ),
-        const SizedBox(height: 12),
-        _buildMetricCard(
-          id: 'thirds', title: 'Facial Thirds', description: 'Upper : Mid : Lower proportions',
-          value: metrics.facialThirdsRatio, ideal: '1:1:1', icon: Icons.format_line_spacing,
-          explanation: 'The face is divided into three horizontal zones: hairline→brow (upper), brow→nose (mid), nose→chin (lower). Ideal is 1:1:1. '
-            'Your ratio is ${metrics.facialThirdsRatio}. Minor variation is completely natural and often adds character — most people show some deviation in at least one zone.',
-        ),
-        const SizedBox(height: 12),
-        _buildMetricCard(
-          id: 'lips', title: 'Lip Volume', description: 'Upper lip vs lower lip fullness',
-          value: metrics.lipVolumeRatio, ideal: '1:1.6', icon: Icons.face_retouching_natural,
-          explanation: 'Lip volume compares upper to lower lip height. Ideal is 1:1.6 (fuller lower lip, following the golden ratio). Your ratio is ${metrics.lipVolumeRatio}. '
-            '${lv >= 1.5 ? 'Your full lower lip is close to ideal — a naturally voluminous, attractive shape.' : lv >= 1.1 ? 'Well-proportioned with a defined lower lip — balanced and elegant.' : 'A refined, even lip shape — delicate and composed.'}',
-        ),
-        const SizedBox(height: 12),
-        _buildMetricCard(
-          id: 'gr', title: 'Golden Ratio', description: 'Horizontal proportion (width vs eye span)',
-          value: gr.toStringAsFixed(3), ideal: '1.618', icon: Icons.aspect_ratio,
-          explanation: 'The golden ratio (1.618) measures face width relative to eye span. Closer to 1.618 = more classically proportioned. Your score: ${gr.toStringAsFixed(3)}. '
-            '${(gr - 1.618).abs() <= 0.05 ? 'Remarkably close to the golden standard — your horizontal proportions are classically ideal.' : (gr - 1.618).abs() <= 0.15 ? 'Within a very natural and attractive range. The golden ratio is guidance, not a rule.' : 'Distinctive proportions — often the foundation of a striking, photogenic look.'}',
-        ),
-        const SizedBox(height: 12),
-        _buildMetricCard(
-          id: 'fe', title: 'Five Eyes Rule', description: 'Face width relative to eye span',
-          value: fe.toStringAsFixed(2), ideal: '1.00',
-          icon: Icons.panorama_wide_angle_select_rounded,
-          explanation: 'The five-eyes rule: face width should equal five eye-widths (1.00 = ideal). Your score: ${fe.toStringAsFixed(2)}. '
-            '${(fe - 1.0).abs() <= 0.06 ? 'Near-perfect — your eye spacing and face width are in classical balance.' : fe > 1.06 ? 'Slightly closer-set eyes, creating a focused, intense quality to your gaze.' : 'Slightly wider-set eyes, giving an open, warm, and inviting expression.'}',
-        ),
-        const SizedBox(height: 32),
-      ],
-    );
-  }
 
-  Widget _buildAICard() {
+final class _AiSnippetCard extends StatelessWidget {
+  final String displayedText;
+  final bool showSpinner;
+  const _AiSnippetCard({required this.displayedText, required this.showSpinner});
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       decoration: BoxDecoration(
@@ -604,147 +559,95 @@ final class _CircularPortraitCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 30,
-                height: 30,
-                decoration: const BoxDecoration(
-                  color: Color(0x22FFFFFF),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(Icons.auto_awesome_rounded, size: 16, color: Colors.white),
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                "Quick Insight",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const Spacer(),
-              AnimatedOpacity(
-                opacity: showSpinner ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 250),
-                child: const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          Row(children: [
+            Container(
+              width: 30, height: 30,
+              decoration: const BoxDecoration(color: Color(0x22FFFFFF), shape: BoxShape.circle),
+              child: const Center(child: Icon(Icons.auto_awesome_rounded, size: 16, color: Colors.white)),
+            ),
+            const SizedBox(width: 10),
+            const Text("Quick Insight", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, letterSpacing: -0.2)),
+            const Spacer(),
+            AnimatedOpacity(
+              opacity: showSpinner ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 250),
+              child: const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white))),
+            ),
+          ]),
           const SizedBox(height: 12),
           Text(
             displayedText.isEmpty ? "Preparing your insight…" : displayedText,
-            style: TextStyle(
-              color: displayedText.isEmpty ? Colors.white70 : Colors.white,
-              fontSize: 14,
-              height: 1.55,
-              fontWeight: FontWeight.w500,
-              letterSpacing: -0.1,
-            ),
+            style: TextStyle(color: displayedText.isEmpty ? Colors.white70 : Colors.white, fontSize: 14, height: 1.55, fontWeight: FontWeight.w500, letterSpacing: -0.1),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildMetricCard({
-    required String id,
-    required String title,
-    required String description,
-    required String value,
-    required String ideal,
-    required IconData icon,
-    required String explanation,
-    bool isHero = false,
-  }) {
-    final bool isOpen = _expanded.contains(id);
-    final Color accent = isHero ? const Color(0xFF00FFCC) : Colors.white;
+final class _MetricRow extends StatefulWidget {
+  final String title;
+  final String subtitle;
+  final String value;
+  final String trailingHint;
+  final IconData icon;
+  final String explanation;
+  const _MetricRow({required this.title, required this.subtitle, required this.value, required this.trailingHint, required this.icon, required this.explanation});
+  @override
+  State<_MetricRow> createState() => _MetricRowState();
+}
+
+final class _MetricRowState extends State<_MetricRow> {
+  bool _isOpen = false;
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
-       onTap: () => setState(() {
-        if (isOpen) { _expanded.remove(id); } else { _expanded.add(id); }
-      }),
+      onTap: () => setState(() => _isOpen = !_isOpen),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 260),
+        duration: const Duration(milliseconds: 250),
         curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isHero
-              ? const Color(0xFF00FFCC).withValues(alpha: isOpen ? 0.14 : 0.08)
-              : (isOpen ? const Color(0xFF22222A) : const Color(0xFF1E1E24)),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isHero
-                ? const Color(0xFF00FFCC).withValues(alpha: isOpen ? 0.7 : 0.4)
-                : (isOpen ? const Color(0x44FFFFFF) : const Color(0x1AFFFFFF)),
-            width: 1,
-          ),
+          color: _isOpen ? const Color(0x1FFFFFFF) : const Color(0x14FFFFFF),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: _isOpen ? const Color(0x44FFFFFF) : const Color(0x22FFFFFF), width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(11),
-                  decoration: BoxDecoration(
-                    color: isHero ? const Color(0xFF00FFCC) : Colors.white12,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: isHero ? Colors.black : Colors.white, size: 22),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
-                      const SizedBox(height: 3),
-                      Text(description, style: const TextStyle(fontSize: 11, color: Colors.white38)),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(value, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: accent)),
-                    const SizedBox(height: 3),
-                    Text('Ideal: $ideal', style: const TextStyle(fontSize: 11, color: Colors.white30)),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                AnimatedRotation(
-                  turns: isOpen ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 260),
-                  curve: Curves.easeOutCubic,
-                  child: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white30, size: 20),
-                ),
-              ],
-            ),
+            Row(children: [
+              Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(color: const Color(0x22FFFFFF), borderRadius: BorderRadius.circular(12)),
+                child: Icon(widget.icon, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(widget.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, letterSpacing: -0.2)),
+                const SizedBox(height: 3),
+                Text(widget.subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.2)),
+              ])),
+              const SizedBox(width: 10),
+              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                Text(widget.value, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
+                const SizedBox(height: 2),
+                Text(widget.trailingHint, style: const TextStyle(color: Colors.white54, fontSize: 12, height: 1.1)),
+              ]),
+              const SizedBox(width: 8),
+              AnimatedRotation(turns: _isOpen ? 0.5 : 0, duration: const Duration(milliseconds: 250), curve: Curves.easeOutCubic,
+                child: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white38, size: 20)),
+            ]),
             AnimatedSize(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutCubic,
-              child: isOpen
+              child: _isOpen
                   ? Padding(
-                      padding: const EdgeInsets.only(top: 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Divider(color: Colors.white.withValues(alpha: 0.07), height: 1),
-                          const SizedBox(height: 12),
-                          Text(explanation,
-                            style: const TextStyle(fontSize: 13, color: Colors.white60, height: 1.65)),
-                        ],
-                      ),
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Divider(color: Colors.white.withOpacity(0.08), height: 1),
+                        const SizedBox(height: 10),
+                        Text(widget.explanation, style: const TextStyle(fontSize: 13, color: Colors.white60, height: 1.65)),
+                      ]),
                     )
                   : const SizedBox.shrink(),
             ),
@@ -755,3 +658,34 @@ final class _CircularPortraitCard extends StatelessWidget {
   }
 }
 
+final class _Appear extends StatefulWidget {
+  final bool show;
+  final Duration delay;
+  final Widget child;
+  const _Appear({required this.show, required this.delay, required this.child});
+  @override
+  State<_Appear> createState() => _AppearState();
+}
+
+final class _AppearState extends State<_Appear> {
+  bool _visible = false;
+  @override
+  void initState() { super.initState(); if (widget.show) _arm(); }
+  @override
+  void didUpdateWidget(covariant _Appear old) { super.didUpdateWidget(old); if (widget.show && !_visible) _arm(); }
+  void _arm() { Future<void>.delayed(widget.delay, () { if (!mounted) return; setState(() => _visible = true); }); }
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: _visible ? 1 : 0,
+      duration: const Duration(milliseconds: 520),
+      curve: Curves.easeOutCubic,
+      child: AnimatedSlide(
+        offset: _visible ? Offset.zero : const Offset(0, 0.02),
+        duration: const Duration(milliseconds: 520),
+        curve: Curves.easeOutCubic,
+        child: widget.child,
+      ),
+    );
+  }
+}

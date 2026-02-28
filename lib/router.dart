@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -112,6 +113,8 @@ final class _FaceReviewStateState extends State<FaceReviewState> {
   FaceMetrics? _metrics;
   String? _aiResponse;
   bool _aiLoading = true;
+  String _displayedText = '';
+  Timer? _typewriter;
 
   @override
   void initState() {
@@ -150,10 +153,25 @@ final class _FaceReviewStateState extends State<FaceReviewState> {
       bytesPerRow: widget.mesh.bytesPerRow,
     );
     if (mounted) setState(() { _aiResponse = result; _aiLoading = false; });
+    if (result != null) _startTypewriter(result);
+  }
+
+  void _startTypewriter(String text) {
+    int i = 0;
+    _typewriter = Timer.periodic(const Duration(milliseconds: 18), (t) {
+      if (!mounted) { t.cancel(); return; }
+      if (i < text.length) {
+        setState(() => _displayedText = text.substring(0, i + 1));
+        i++;
+      } else {
+        t.cancel();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _typewriter?.cancel();
     _image?.dispose();
     super.dispose();
   }
@@ -322,17 +340,17 @@ final class _FaceReviewStateState extends State<FaceReviewState> {
           const SizedBox(height: 12),
           if (_aiLoading)
             const Text(
-              'GPT-4o is analyzing your portrait...',
+              'Generating your portrait insight...',
               style: TextStyle(color: Colors.white54, fontSize: 14, fontStyle: FontStyle.italic),
             )
           else if (_aiResponse != null)
             Text(
-              _aiResponse!,
-              style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.5),
+              _displayedText,
+              style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.6),
             )
           else
             const Text(
-              'Unable to reach GPT-4o. Check your API key and network connection.',
+              'Unable to reach the AI. Check your API key and network connection.',
               style: TextStyle(color: Colors.redAccent, fontSize: 13),
             ),
         ],

@@ -3,11 +3,21 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sigma/capture/capture.dart';
+import 'package:sigma/ephemeral/post_capture.dart';
 import 'package:sigma/inference/face_mesh.dart';
 import 'package:sigma/analysis/face_processor.dart';
 import 'package:sigma/analysis/face_metrics.dart';
 import 'package:sigma/analysis/openai_service.dart';
-import 'package:sigma/onboarding/disclaimer.dart';
+import 'package:sigma/ephemeral/disclaimer.dart';
+
+final class Results {
+  final FaceMesh mesh;
+  final Future<String> aifut;
+  Results({
+    required this.mesh,
+    required this.aifut
+  });
+}
 
 final GoRouter SIGMA_ROUTER = GoRouter(
   initialLocation: '/',
@@ -25,18 +35,33 @@ final GoRouter SIGMA_ROUTER = GoRouter(
         state: state,
         child: FaceCaptureState(
           onCapturePressed: (final FaceMesh mesh) {
-            context.push('/review', extra: mesh);
+            final Results res = Results(mesh: mesh, aifut: mockOpenAiResultsFuture());
+            context.push(
+              '/processing',
+              extra: res,
+            );
           },
         ),
       ),
     ),
     GoRoute(
+      path: '/processing',
+      builder: (context, state) {
+        final Results res = state.extra! as Results;
+        return ProcessingResultsScreen(
+          mesh: res.mesh,
+          resultsFuture: res.aifut,
+          onSeeFullResults: () => context.pushReplacement('/review', extra: res),
+        );
+      },
+    ),
+    GoRoute(
       path: '/review',
       pageBuilder: (context, state) {
-        final FaceMesh mesh = state.extra as FaceMesh;
+        final Results res = state.extra! as Results;
         return sheetPage(
           state: state,
-          child: FaceReviewState(mesh: mesh),
+          child: FaceReviewState(mesh: res.mesh),
         );
       },
     ),

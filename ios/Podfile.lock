@@ -19,9 +19,9 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/mediapipe_face_mesh/ios"
 
 SPEC CHECKSUMS:
-  camera_avfoundation: 769d252259fa21e39ada7399c9dc9c0921af8165
+  camera_avfoundation: 968a9a5323c79a99c166ad9d7866bfd2047b5a9b
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  mediapipe_face_mesh: 486b08a78691506e385e4eefa7e56c3768f04d23
+  mediapipe_face_mesh: 953fb4caa9326e0e6d47d194ea837dd2694f426c
 
 PODFILE CHECKSUM: ef460edeecccea9f20c5f28ffa5f0a3e590b7549
 

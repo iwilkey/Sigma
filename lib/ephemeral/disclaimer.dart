@@ -14,11 +14,13 @@ final class WelcomeScreen extends StatefulWidget {
     super.key,
     required this.nextRouteName,
     this.lines = const [
-      'Welcome to Sigma',
+      "Welcome to Sigma",
+      "Scan your face to discover your strengths and unique features.",
       "Beauty is more than math.",
-      "The following insights are based on objectivley interpreted geometric patterns.",
-      "Sigma is completely local; None of your data is being saved.",
-      'Scan your face, learn about your strengths and ways you might improve your.',
+      "Insights are based on measured facial geometry and common beauty signals.",
+      "However, these results do not define you, and are likely to reflect bias.",
+      "An image may be sent briefly for analysis and isn’t stored.",
+      "Ready? Let’s begin."
     ],
   });
   @override
@@ -66,7 +68,7 @@ final class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerPr
       setState(() => _index++);
       return;
     }
-    SIGMA_ROUTER.push(widget.nextRouteName);
+    SIGMA_ROUTER.pushReplacement(widget.nextRouteName);
   }
 
   @override
@@ -114,7 +116,7 @@ final class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerPr
                             ),
                           );
                         },
-                        child: Text(
+                        child: Padding(key: ValueKey(_index), padding: const EdgeInsets.symmetric(horizontal: 24), child: Text(
                           widget.lines[_index],
                           key: ValueKey(_index),
                           textAlign: TextAlign.center,
@@ -123,13 +125,13 @@ final class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerPr
                                 height: 1.1,
                                 letterSpacing: -0.5,
                                 color: Colors.white,
-                              ),
+                              )),
                         ),
                       ),
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.only(bottom: math.max(12.0, media.padding.bottom)),
+                    padding: EdgeInsets.only(bottom: math.max(0, media.padding.bottom - 16)),
                     child: SizedBox(
                       width: double.infinity,
                       height: 54,
@@ -149,7 +151,7 @@ final class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerPr
                           transitionBuilder: (child, anim) =>
                               FadeTransition(opacity: anim, child: child),
                           child: Text(
-                            _index == widget.lines.length - 1 ? 'Continue' : 'Next',
+                            _index == widget.lines.length - 1 ? 'Begin' : 'Next',
                             key: ValueKey(_index == widget.lines.length - 1),
                             style: const TextStyle(
                               fontSize: 16,

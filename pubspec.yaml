@@ -1,8 +1,8 @@
 name: sigma
-description: "A new Flutter project."
+description: "HackIllinois 2026 Submission by Ian Wilkey and Barney Jin for Modal track."
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 2026.2.28+1
 
 environment:
   sdk: ^3.9.2
@@ -16,11 +16,25 @@ dependencies:
   go_router: ^17.1.0
   http: ^1.6.0
   image: ^4.8.0
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  ios: true
+  image_path: "assets/icon.png"
+
+flutter_native_splash:
+  color: "#000000"
+  image: assets/icon.png
+  ios_content_mode: center
+  fullscreen: true
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon.png

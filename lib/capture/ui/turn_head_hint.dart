@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 /// Author: Ian Wilkey and Barney Jin
@@ -13,7 +15,6 @@ final class TurnHeadHint extends StatefulWidget {
 
 /// Author: Ian Wilkey and Barney Jin
 final class _TurnHeadHintState extends State<TurnHeadHint> with SingleTickerProviderStateMixin {
-
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1000),
@@ -53,7 +54,7 @@ final class _TurnHeadHintState extends State<TurnHeadHint> with SingleTickerProv
             // ignore: deprecated_member_use
             final Color iconColor = Colors.white.withOpacity(0.88 + 0.07 * t);
             return Transform.translate(
-              offset: Offset(0, 0),
+              offset: const Offset(0, 0),
               child: _HintPill(
                 textColor: textColor,
                 iconColor: iconColor,
@@ -68,7 +69,6 @@ final class _TurnHeadHintState extends State<TurnHeadHint> with SingleTickerProv
 
 /// Author: Ian Wilkey and Barney Jin
 final class _HintPill extends StatelessWidget {
-
   const _HintPill({
     required this.textColor,
     required this.iconColor,
@@ -82,39 +82,42 @@ final class _HintPill extends StatelessWidget {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            // ignore: deprecated_member_use
-            color: Colors.black.withOpacity(0.20),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              // ignore: deprecated_member_use
-              color: Colors.white.withOpacity(0.25),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.question_answer_rounded,
-                size: 28,
-                color: iconColor,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                // keep the same visual tint; blur now comes from BackdropFilter
+                // ignore: deprecated_member_use
+                color: Colors.black.withOpacity(0.20),
+                borderRadius: BorderRadius.circular(32),
               ),
-              const SizedBox(width: 12),
-              Flexible(
-                child: Text(
-                  'Your face should be about eight inches from the camera. Turn your head slowly side to side, keeping your face centered and well-lit until it’s detected.',
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.0,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.question_answer_rounded,
+                    size: 28,
+                    color: iconColor,
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    child: Text(
+                      'Your face should be about eight inches from the camera. Turn your head slowly side to side, keeping your face centered and well-lit until it’s detected.',
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.0,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

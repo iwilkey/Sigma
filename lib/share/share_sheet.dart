@@ -7,14 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:sigma/analysis/face_metrics.dart';
 import 'package:sigma/share/share_service.dart';
 
-/// A modal bottom sheet that lets the user optionally enter an email address
-/// before sharing their Sigma portrait report PDF.
-///
-/// Usage:
-///   ShareSheet.show(context, metrics: m, bgraPixels: px, ...);
+/// Author: Ian Wilkey and Barney Jin
 final class ShareSheet {
   ShareSheet._();
-
   static Future<void> show(
     BuildContext context, {
     required FaceMetrics metrics,
@@ -40,6 +35,7 @@ final class ShareSheet {
   }
 }
 
+/// Author: Ian Wilkey and Barney Jin
 final class _ShareSheetContent extends StatefulWidget {
   final FaceMetrics metrics;
   final Uint8List bgraPixels;
@@ -47,7 +43,6 @@ final class _ShareSheetContent extends StatefulWidget {
   final int imageHeight;
   final int bytesPerRow;
   final String aiInsight;
-
   const _ShareSheetContent({
     required this.metrics,
     required this.bgraPixels,
@@ -56,14 +51,15 @@ final class _ShareSheetContent extends StatefulWidget {
     required this.bytesPerRow,
     required this.aiInsight,
   });
-
   @override
   State<_ShareSheetContent> createState() => _ShareSheetContentState();
 }
 
 final class _ShareSheetContentState extends State<_ShareSheetContent> {
+
   final TextEditingController _emailCtrl = TextEditingController();
   final FocusNode _emailFocus = FocusNode();
+
   bool _loading = false;
   bool _done = false;
 
@@ -78,10 +74,11 @@ final class _ShareSheetContentState extends State<_ShareSheetContent> {
 
   Future<void> _share() async {
     _dismissKeyboard();
-    if (_loading) return;
+    if(_loading) return;
     setState(() => _loading = true);
     try {
       await ShareService.shareReport(
+        context: context,
         metrics: widget.metrics,
         bgraPixels: widget.bgraPixels,
         imageWidth: widget.imageWidth,
@@ -90,16 +87,26 @@ final class _ShareSheetContentState extends State<_ShareSheetContent> {
         aiInsight: widget.aiInsight,
         email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
       );
-      if (mounted) setState(() { _loading = false; _done = true; });
+      if(!mounted) return;
+      setState(() {
+        _loading = false;
+        _done = true;
+      });
     } catch (e) {
-      if (mounted) setState(() => _loading = false);
+      if(!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Share failed: $e'),
+          backgroundColor: Colors.black87,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final double bottomPad = MediaQuery.of(context).viewInsets.bottom;
-
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _dismissKeyboard,
@@ -114,7 +121,6 @@ final class _ShareSheetContentState extends State<_ShareSheetContent> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Drag handle ──────────────────────────────────────────────────
           Center(
             child: Container(
               width: 40, height: 4,
@@ -125,43 +131,26 @@ final class _ShareSheetContentState extends State<_ShareSheetContent> {
               ),
             ),
           ),
-
-          // ── Header ───────────────────────────────────────────────────────
           Row(children: [
-            const Text('Share Your Report',
+            const Text('Share Your Sigma Report',
               style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
             const Spacer(),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFF00FFCC).withOpacity(0.15),
+                color: Colors.white.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF00FFCC).withOpacity(0.4), width: 1),
+                border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
               ),
-              child: const Text('PDF', style: TextStyle(color: Color(0xFF00FFCC), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1)),
+              child: const Text('PDF', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1)),
             ),
           ]),
           const SizedBox(height: 6),
           const Text(
-            'Your portrait photo, AI insight, and all 5 harmony metrics — beautifully packaged.',
+            'Your portrait photo, AI insights, and all 5 Sigma harmony metrics, beautifully packaged and ready to distribute.',
             style: TextStyle(color: Colors.white54, fontSize: 13, height: 1.4),
           ),
-          const SizedBox(height: 24),
-
-          // ── Metric preview pills ─────────────────────────────────────────
-          Wrap(
-            spacing: 8, runSpacing: 8,
-            children: [
-              _pill('Symmetry', '${widget.metrics.overallSymmetry.toStringAsFixed(1)}%'),
-              _pill('Canthal', '${widget.metrics.averageCanthalTilt > 0 ? '+' : ''}${widget.metrics.averageCanthalTilt.toStringAsFixed(1)}°'),
-              _pill('Thirds', widget.metrics.facialThirdsRatio),
-              _pill('Lips', widget.metrics.lipVolumeRatio),
-              _pill('φ Ratio', widget.metrics.horizontalGoldenRatio.toStringAsFixed(3)),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // ── Email field ──────────────────────────────────────────────────
+          const SizedBox(height: 12),
           const Text('Email address (optional)',
             style: TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
           const SizedBox(height: 8),
@@ -193,9 +182,7 @@ final class _ShareSheetContentState extends State<_ShareSheetContent> {
             'If filled in, the email app will open pre-addressed to this address.',
             style: TextStyle(color: Colors.white30, fontSize: 11, height: 1.4),
           ),
-          const SizedBox(height: 24),
-
-          // ── Share button ─────────────────────────────────────────────────
+          const SizedBox(height: 16),
           SizedBox(
             height: 54,
             child: AnimatedSwitcher(
@@ -216,28 +203,29 @@ final class _ShareSheetContentState extends State<_ShareSheetContent> {
                         ]),
                       ),
                     )
-                  : GestureDetector(
-                      key: const ValueKey('share'),
-                      onTap: _share,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF00FFCC),
-                          borderRadius: BorderRadius.circular(16),
+                  : SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: OutlinedButton(
+                        onPressed: _share,
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white, width: 1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
-                        child: Center(
-                          child: _loading
-                              ? const SizedBox(
-                                  width: 22, height: 22,
-                                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.black),
-                                )
-                              : const Row(mainAxisSize: MainAxisSize.min, children: [
-                                  Icon(Icons.ios_share_rounded, color: Colors.black, size: 20),
-                                  SizedBox(width: 8),
-                                  Text('Share Report', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w800, fontSize: 15)),
-                                ]),
+                        child: const Text(
+                          "Share Report",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.1,
+                          ),
                         ),
                       ),
-                    ),
+                  )
             ),
           ),
         ],
@@ -245,19 +233,4 @@ final class _ShareSheetContentState extends State<_ShareSheetContent> {
     ));
   }
 
-  Widget _pill(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1C26),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0x22FFFFFF), width: 1),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
-        const SizedBox(width: 6),
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
-      ]),
-    );
-  }
 }

@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 	<dict>
+
+		<key>NSCameraUsageDescription</key>
+		<string>Sigma needs to see you.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Sigma may need to hear you.</string>
+
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>CFBundleDevelopmentRegion</key>

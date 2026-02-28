@@ -169,7 +169,7 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
               if(!ready) ...[
                 const ColoredBox(
                   color: Colors.black,
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(child: CircularProgressIndicator(color: Colors.white,)),
                 ),
               ] else ...[
                 if(_controller != null && _controller!.value.isInitialized)

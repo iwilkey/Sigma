@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -53,7 +55,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
     _bg = BouncyBlurDotsRenderable(
       seed: 3,
       dotCount: 14,
-      blurSigma: 26,
+      blurSigma: 50,
       speed: 1.0,
     );
     _ticker = createTicker((now) {
@@ -173,14 +175,36 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               const SizedBox(height: 72,),
-                              _Appear(
-                                show: _showContent,
-                                delay: const Duration(milliseconds: 0),
-                                child: _CircularPortraitCard(
-                                  mesh: widget.mesh,
-                                  image: _image,
+                              Stack(children: [
+                                Positioned(
+                                  top: MediaQuery.of(context).padding.top - 48,
+                                  right: 0,
+                                  child: AnimatedOpacity(
+                                    opacity: _metrics != null ? 1.0 : 0.0,
+                                    duration: const Duration(milliseconds: 400),
+                                    child: GestureDetector(
+                                      onTap: _openShareSheet,
+                                      child: Container(
+                                        width: 44, height: 44,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.12),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: Colors.white.withOpacity(0.25), width: 1),
+                                        ),
+                                        child: const Icon(Icons.ios_share_rounded, color: Colors.white, size: 20),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                _Appear(
+                                  show: _showContent,
+                                  delay: const Duration(milliseconds: 0),
+                                  child: _CircularPortraitCard(
+                                    mesh: widget.mesh,
+                                    image: _image,
+                                  ),
+                                ),
+                              ]),
                               const SizedBox(height: 14),
                               _Appear(
                                 show: _showContent,
@@ -196,7 +220,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                 delay: const Duration(milliseconds: 160),
                                 child: _MetricRow(
                                   title: "Symmetry Match",
-                                  subtitle: "Perceived reflection alignment",
+                                  subtitle: "Reflection Alignment",
                                   value: "${metrics.overallSymmetry.toStringAsFixed(1)}%",
                                   trailingHint: "Ideal 100%",
                                   icon: Icons.balance_rounded,
@@ -210,7 +234,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                 delay: const Duration(milliseconds: 200),
                                 child: _MetricRow(
                                   title: "Canthal Tilt",
-                                  subtitle: "Eye expression angle",
+                                  subtitle: "Eye Expression Angle",
                                   value:
                                       "${metrics.averageCanthalTilt > 0 ? '+' : ''}${metrics.averageCanthalTilt.toStringAsFixed(1)}°",
                                   trailingHint: "Ideal +3° to +5°",
@@ -225,7 +249,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                 delay: const Duration(milliseconds: 240),
                                 child: _MetricRow(
                                   title: "Facial Thirds",
-                                  subtitle: "Upper : Mid : Lower proportions",
+                                  subtitle: "Facial Proportions",
                                   value: metrics.facialThirdsRatio,
                                   trailingHint: "Ideal 1:1:1",
                                   icon: Icons.view_agenda_rounded,
@@ -239,7 +263,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                 delay: const Duration(milliseconds: 280),
                                 child: _MetricRow(
                                   title: "Lip Volume",
-                                  subtitle: "Upper vs lower fullness ratio",
+                                  subtitle: "Fullness Ratio",
                                   value: metrics.lipVolumeRatio,
                                   trailingHint: "Ideal 1:1.6",
                                   icon: Icons.face_retouching_natural_rounded,
@@ -252,7 +276,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                 delay: const Duration(milliseconds: 320),
                                 child: _MetricRow(
                                   title: "Golden Ratio",
-                                  subtitle: "Width vs eye span",
+                                  subtitle: "Width vs Eye Span",
                                   value: metrics.horizontalGoldenRatio.toStringAsFixed(3),
                                   trailingHint: "Ideal 1.618",
                                   icon: Icons.aspect_ratio_rounded,
@@ -265,8 +289,6 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                           ),
                         ),
                       ),
-
-                      // Bottom button: Done (single callback)
                       _Appear(
                         show: _showContent && _displayedText.isNotEmpty,
                         delay: const Duration(milliseconds: 250),
@@ -274,14 +296,16 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                           padding: EdgeInsets.only(
                             bottom: math.max(0, media.padding.bottom - 12),
                           ),
-                          child: SizedBox(
+                          child: Container(
+                            color: Colors.transparent,  
                             width: double.infinity,
                             height: 54,
                             child: OutlinedButton(
                               onPressed: widget.onDone,
                               style: OutlinedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
                                 foregroundColor: Colors.white,
-                                side: const BorderSide(color: Colors.white, width: 1.5),
+                                side: const BorderSide(color: Colors.white, width: 1),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -300,27 +324,6 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                       ),
                     ],
                   ),
-          ),
-          // ── Share button (top-right, appears when AI insight is ready) ──
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 12,
-            right: 20,
-            child: AnimatedOpacity(
-              opacity: _metrics != null ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 400),
-              child: GestureDetector(
-                onTap: _openShareSheet,
-                child: Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.12),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withOpacity(0.25), width: 1),
-                  ),
-                  child: const Icon(Icons.ios_share_rounded, color: Colors.white, size: 20),
-                ),
-              ),
-            ),
           ),
         ],
       ),
@@ -430,12 +433,12 @@ final class _AiSnippetCard extends StatelessWidget {
         children: [
           Row(children: [
             Container(
-              width: 30, height: 30,
+              width: 48, height: 48,
               decoration: const BoxDecoration(color: Color(0x22FFFFFF), shape: BoxShape.circle),
-              child: const Center(child: Icon(Icons.auto_awesome_rounded, size: 16, color: Colors.white)),
+              child: const Center(child: Icon(Icons.auto_awesome_rounded, size: 24, color: Colors.white)),
             ),
             const SizedBox(width: 10),
-            const Text("Quick Insight", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, letterSpacing: -0.2)),
+            const Text("Overall", style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.w700, letterSpacing: -0.2)),
             const Spacer(),
             AnimatedOpacity(
               opacity: showSpinner ? 1.0 : 0.0,
@@ -445,8 +448,8 @@ final class _AiSnippetCard extends StatelessWidget {
           ]),
           const SizedBox(height: 12),
           Text(
-            displayedText.isEmpty ? "Preparing your insight…" : displayedText,
-            style: TextStyle(color: displayedText.isEmpty ? Colors.white70 : Colors.white, fontSize: 14, height: 1.55, fontWeight: FontWeight.w500, letterSpacing: -0.1),
+            displayedText.isEmpty ? "Preparing your insights..." : displayedText,
+            style: TextStyle(color: displayedText.isEmpty ? Colors.white70 : Colors.white, fontSize: 16, height: 1.3, fontWeight: FontWeight.bold, letterSpacing: -0.1),
           ),
         ],
       ),
@@ -484,27 +487,90 @@ final class _MetricRowState extends State<_MetricRow> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Container(
-                width: 48, height: 48,
-                decoration: BoxDecoration(color: const Color(0x22FFFFFF), borderRadius: BorderRadius.circular(12)),
-                child: Icon(widget.icon, color: Colors.white, size: 32),
-              ),
-              const SizedBox(width: 12),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(widget.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, letterSpacing: -0.2, fontSize: 16)),
-                const SizedBox(height: 3),
-                Text(widget.subtitle, style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.2)),
-              ])),
-              const SizedBox(width: 12),
-              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text(widget.value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
-                Text(widget.trailingHint, style: const TextStyle(color: Colors.white54, fontSize: 13, height: 1.1)),
-              ]),
-              const SizedBox(width: 8),
-              AnimatedRotation(turns: _isOpen ? 0.5 : 0, duration: const Duration(milliseconds: 250), curve: Curves.easeOutCubic,
-                child: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white38, size: 20)),
-            ]),
+            Row(
+              children: [
+                SizedBox(
+                  width: 52,
+                  height: 52,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0x22FFFFFF),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(widget.icon, color: Colors.white, size: 30),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        widget.subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.2),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                SizedBox(
+                  width: 120, // keeps every row's right side identical
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        widget.value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      Text(
+                        widget.trailingHint,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white54, fontSize: 13, height: 1.1),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 6),
+                SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: Center(
+                    child: AnimatedRotation(
+                      turns: _isOpen ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutCubic,
+                      child: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white38, size: 20),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             AnimatedSize(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutCubic,
@@ -514,10 +580,8 @@ final class _MetricRowState extends State<_MetricRow> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ignore: deprecated_member_use
                           Divider(color: Colors.white.withOpacity(0.08), height: 1),
                           const SizedBox(height: 12),
-
                           _MetricDetailsPanel(
                             title: widget.title,
                             subtitle: widget.subtitle,
@@ -678,27 +742,32 @@ class _MetricGauge extends StatelessWidget {
           ]),
           const SizedBox(height: 12),
 
-          // Bar with ideal-range overlay + marker
           LayoutBuilder(
             builder: (context, c) {
               final double w = c.maxWidth;
-              final double barH = 10;
+
+              const double barH = 10;
+              const double markerD = 14;
+
+              // Center the bar on this y so the marker can be centered on the bar line.
+              const double barCenterY = 18;
 
               final double idealX = idealL * w;
               final double idealW = (idealR - idealL) * w;
 
-              final double markerX = p * w;
+              // Marker should be centered at p*w.
+              final double markerCenterX = p * w;
+              final double markerLeft = (markerCenterX - markerD / 2).clamp(0.0, w - markerD);
 
               return SizedBox(
-                height: 38,
+                height: 44,
                 child: Stack(
-                  alignment: Alignment.centerLeft,
                   children: [
-                    // Base track
+                    // Track
                     Positioned(
                       left: 0,
                       right: 0,
-                      top: 14,
+                      top: barCenterY - barH / 2,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(999),
                         child: Container(
@@ -711,7 +780,7 @@ class _MetricGauge extends StatelessWidget {
                     // Ideal band
                     Positioned(
                       left: idealX,
-                      top: 14,
+                      top: barCenterY - barH / 2,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(999),
                         child: Container(
@@ -722,13 +791,13 @@ class _MetricGauge extends StatelessWidget {
                       ),
                     ),
 
-                    // Marker (your value)
+                    // Marker
                     Positioned(
-                      left: (markerX - 7).clamp(0, w - 14),
-                      top: 9,
+                      left: markerLeft,
+                      top: barCenterY - markerD / 2,
                       child: Container(
-                        width: 14,
-                        height: 14,
+                        width: markerD,
+                        height: markerD,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(999),
@@ -743,7 +812,7 @@ class _MetricGauge extends StatelessWidget {
                       ),
                     ),
 
-                    // Sub-labels
+                    // Sub labels
                     Positioned(
                       left: 0,
                       bottom: 0,
@@ -776,7 +845,6 @@ class _MetricGauge extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          // Ideal hint row
           Row(
             children: [
               _TinyBadge(text: "IDEAL ZONE"),
@@ -821,7 +889,7 @@ class _StackUpRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _MiniMetricTile(
-            title: "Compared to ideal",
+            title: "Ideal",
             value: spec.deltaLabel,
             icon: Icons.track_changes_rounded,
           ),
@@ -984,16 +1052,16 @@ class _MetricVisualSpec {
     final bool inIdeal = v >= idealMin && v <= idealMax;
 
     if (inIdeal) {
-      return const _MetricVerdict("In ideal range", Icons.verified_rounded);
+      return const _MetricVerdict("In Ideal Range", Icons.verified_rounded);
     }
 
     // outside ideal: decide “close” vs “far”
     final double dist = (v < idealMin) ? (idealMin - v) : (v - idealMax);
     final double band = (idealMax - idealMin).abs().clamp(1e-6, 1e9);
-    final bool close = dist <= band * 0.60;
+    final bool close = dist <= band * 1.25;
 
     if (close) {
-      return const _MetricVerdict("Close to ideal", Icons.insights_rounded);
+      return const _MetricVerdict("Close to Ideal", Icons.insights_rounded);
     } else {
       return const _MetricVerdict("Distinctive", Icons.star_rounded);
     }
@@ -1003,7 +1071,7 @@ class _MetricVisualSpec {
     if (kind != _MetricVisualKind.numeric || value == null) return "—";
     final double v = value!;
     final bool inIdeal = v >= idealMin && v <= idealMax;
-    if (inIdeal) return "right on";
+    if (inIdeal) return "Right On";
 
     final double target = (v < idealMin) ? idealMin : idealMax;
     final double d = (v - target).abs();
@@ -1053,13 +1121,14 @@ class _MetricVisualSpec {
     }
 
     // Metric-specific “beautiful” ranges
+    // Symmetry
     if (t.contains("symmetry")) {
       return _MetricVisualSpec._(
         kind: _MetricVisualKind.numeric,
         value: v,
         min: 60,
         max: 100,
-        idealMin: 90,
+        idealMin: 85,
         idealMax: 100,
         unit: "%",
         higherIsBetter: true,
@@ -1067,8 +1136,8 @@ class _MetricVisualSpec {
         valueLabel: valueText,
         minLabel: "60%",
         maxLabel: "100%",
-        idealLabel: "90–100% reads as very balanced",
-        takeaway: "Think of this as “mirror-balance.” Higher tends to read as more classically even on camera.",
+        idealLabel: "85 to 100 percent reads as very balanced",
+        takeaway: "This is a balance score. Above the mid 80s usually reads strong on camera.",
       );
     }
 
@@ -1078,16 +1147,16 @@ class _MetricVisualSpec {
         value: v,
         min: -8,
         max: 8,
-        idealMin: 3,
-        idealMax: 5,
-        unit: "°",
+        idealMin: 2,
+        idealMax: 6,
+        unit: "deg",
         higherIsBetter: true,
         thirdsParts: const [1, 1, 1],
         valueLabel: valueText,
-        minLabel: "-8°",
-        maxLabel: "+8°",
-        idealLabel: "+3° to +5° is the classic “bright” look",
-        takeaway: "Positive tilt reads more lifted/alert; neutral to slightly positive reads open and approachable.",
+        minLabel: "-8",
+        maxLabel: "+8",
+        idealLabel: "Plus 2 to plus 6 deg is a common flattering range",
+        takeaway: "Slightly positive tilt tends to read alert and friendly. Neutral is still totally fine.",
       );
     }
 
@@ -1097,36 +1166,35 @@ class _MetricVisualSpec {
         value: v,
         min: 1.20,
         max: 2.00,
-        idealMin: 1.568,
-        idealMax: 1.668,
+        idealMin: 1.52,
+        idealMax: 1.72,
         unit: "",
         higherIsBetter: true,
         thirdsParts: const [1, 1, 1],
         valueLabel: valueText,
         minLabel: "1.20",
         maxLabel: "2.00",
-        idealLabel: "≈ 1.618 is the historical “golden” target",
-        takeaway: "This is a proportion check (not a beauty verdict). Closer to the band tends to read more ‘harmonic.’",
+        idealLabel: "About 1.52 to 1.72 is a typical harmonic band",
+        takeaway: "This is just a proportion check. Many great faces sit outside the textbook number.",
       );
     }
 
     if (t.contains("lip volume")) {
-      // Treat ideal as 1.6 ± 0.2
       return _MetricVisualSpec._(
         kind: _MetricVisualKind.numeric,
         value: v,
         min: 0.8,
         max: 2.2,
-        idealMin: 1.4,
-        idealMax: 1.8,
+        idealMin: 1.30,
+        idealMax: 1.90,
         unit: "",
         higherIsBetter: true,
         thirdsParts: const [1, 1, 1],
         valueLabel: valueText,
         minLabel: "0.8",
         maxLabel: "2.2",
-        idealLabel: "≈ 1.6 is the “fuller lower lip” classic",
-        takeaway: "A slightly fuller lower lip often reads natural and balanced—small variation is common.",
+        idealLabel: "About 1.3 to 1.9 is a common natural range",
+        takeaway: "A slightly fuller lower lip is common. The goal is overall balance, not a perfect number.",
       );
     }
 

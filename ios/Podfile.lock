@@ -1,0 +1,28 @@
+PODS:
+  - camera_avfoundation (0.0.1):
+    - Flutter
+  - Flutter (1.0.0)
+  - mediapipe_face_mesh (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
+  - Flutter (from `Flutter`)
+  - mediapipe_face_mesh (from `.symlinks/plugins/mediapipe_face_mesh/ios`)
+
+EXTERNAL SOURCES:
+  camera_avfoundation:
+    :path: ".symlinks/plugins/camera_avfoundation/ios"
+  Flutter:
+    :path: Flutter
+  mediapipe_face_mesh:
+    :path: ".symlinks/plugins/mediapipe_face_mesh/ios"
+
+SPEC CHECKSUMS:
+  camera_avfoundation: 968a9a5323c79a99c166ad9d7866bfd2047b5a9b
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  mediapipe_face_mesh: 953fb4caa9326e0e6d47d194ea837dd2694f426c
+
+PODFILE CHECKSUM: 10c27257e4390da0cc7403be61fa4243dfa4395f
+
+COCOAPODS: 1.16.2

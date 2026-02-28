@@ -21,3 +21,19 @@ Pages:
 - Pre Scan Page
 - Scan Page
 - Post Scan Page
+
+
+Ian:
+
+    - You get a list of "placemarks"
+        - The point in 2D space
+        - Information (nose, right eye, lower cheekbone, null)
+        - Photo, with mesh to match
+        - Confidence score
+
+Barney:
+
+    - Take what Ian gives and output attractive score
+        - symmetry, five-eye-rules, etc.
+        - Render a post scan page.
+

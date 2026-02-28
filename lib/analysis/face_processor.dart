@@ -207,10 +207,10 @@ class FaceProcessor {
       );
 
       // 4. Run C++ inference engine
-      final FaceMeshResult? result = processor.process(mpImage);
+      final FaceMeshResult result = processor.process(mpImage);
       processor.close(); // Clean up native memory
       
-      if (result == null || result.landmarks.isEmpty) {
+      if (result.landmarks.isEmpty) {
         debugPrint('No faces detected in the image.');
         return null;
       }

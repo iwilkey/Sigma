@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
@@ -27,8 +26,8 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
 
   static const bool S_STREAM_FRAME = true;
 
-  late final Completer<void>  _initialized = Completer<void>();
-  late final FaceMeshPipeline _pipeline;
+  late final Completer<void>    _initialized = Completer<void>();
+  late final FaceMeshPipeline   _pipeline;
   late final FaceMeshRenderable _meshRenderable;
 
   FaceMesh?         _latestMesh;
@@ -41,8 +40,8 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
     _initCamera();
     _meshRenderable = FaceMeshRenderable(
       null,
-      dt: true,
-      dp: true,
+      drawTriangles: true,
+      drawPoints: true,
       constructionTrianglesPerFrame: 20,
       destructionTrianglesPerFrame: 120,
       partialTriangle: true,
@@ -57,8 +56,6 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
       _latestMesh = mesh;
       _meshRenderable.tick(mesh);
       setState((){});
-      //print(1.0 / (1.0 + math.exp(-mesh.score)));
-
     });
   }
 

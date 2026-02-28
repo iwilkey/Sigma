@@ -9,11 +9,11 @@ import 'package:sigma/rendering/renderable.dart';
 final class FaceMeshRenderable implements Renderable {
 
   final BoxFit fit;
-  final bool   mor;
-  final bool   dp;
-  final bool   dt;
-  final double pr;
-  final double sw;
+  final bool   mirror;
+  final bool   drawPoints;
+  final bool   drawTriangles;
+  final double pointRadius;
+  final double strokeWidth;
   final double threshold;
   final double constructionTrianglesPerFrame;
   final double destructionTrianglesPerFrame;
@@ -29,11 +29,11 @@ final class FaceMeshRenderable implements Renderable {
   FaceMeshRenderable(
     FaceMesh? initial, {
     this.fit = BoxFit.cover,
-    this.mor = false,
-    this.dp = true,
-    this.dt = true,
-    this.pr = 1.5,
-    this.sw = 1.0,
+    this.mirror = false,
+    this.drawPoints = true,
+    this.drawTriangles = true,
+    this.pointRadius = 1.5,
+    this.strokeWidth = 1.0,
     this.threshold = 0.5,
     this.constructionTrianglesPerFrame = 80.0,
     this.destructionTrianglesPerFrame = 120.0,
@@ -62,19 +62,17 @@ final class FaceMeshRenderable implements Renderable {
       m.points.length,
       (i) {
         final Offset p = mapper(m.points[i]);
-        return mor ? Offset(size.width - p.dx, p.dy) : p;
+        return mirror ? Offset(size.width - p.dx, p.dy) : p;
       },
       growable: false,
     );
-    final int triCount = _orderedTriangles.length;
-    double triT(int i) => triCount <= 1 ? 0.0 : (i / (triCount - 1));
     final Paint lpBase = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = sw;
+      ..strokeWidth = strokeWidth;
     final Paint pp = Paint()..style = PaintingStyle.fill;
     final int fullCount = _triProgress.floor();
     final double frac = _triProgress - fullCount;
-    if(dp && fullCount > 0) {
+    if(drawPoints && fullCount > 0) {
       final used = Uint8List(mapped.length);
       for(int i = 0; i < fullCount; i++) {
         final List<int> tri = _orderedTriangles[i];
@@ -90,19 +88,19 @@ final class FaceMeshRenderable implements Renderable {
       }
       for(int i = 0; i < mapped.length; i++) {
         if(used[i] == 1) {
-          canvas.drawCircle(mapped[i], pr, pp);
+          canvas.drawCircle(mapped[i], pointRadius, pp);
         }
       }
     }
-    if(!dt) return;
+    if(!drawTriangles) return;
     for(int i = 0; i < fullCount; i++) {
-      final tri = _orderedTriangles[i];
-      final Color c = _palette(triT(i));
+      final List<int> tri = _orderedTriangles[i];
+      final Color c = Colors.white;
       final Paint linePaint = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = sw
+        ..strokeWidth = strokeWidth
         // ignore: deprecated_member_use
-        ..color = c.withOpacity(0.40);
+        ..color = c.withOpacity(0.30);
       _tri(canvas, mapped, tri, linePaint);
     }
     if(partialTriangle && fullCount < _orderedTriangles.length && frac > 0.0) {
@@ -110,7 +108,7 @@ final class FaceMeshRenderable implements Renderable {
       final int a = (frac * 255).clamp(0, 255).toInt();
       final Paint lp = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = sw
+        ..strokeWidth = strokeWidth
         ..color = lpBase.color.withAlpha(a);
       _tri(canvas, mapped, tri, lp);
     }
@@ -142,10 +140,10 @@ final class FaceMeshRenderable implements Renderable {
     final Offset center = _cent(m.points);
     final List<List<int>> copy = List<List<int>>.from(tris);
     copy.sort((t1, t2) {
-      final c1 = _tcent(m.points, t1);
-      final c2 = _tcent(m.points, t2);
-      final d1 = (c1 - center).distanceSquared;
-      final d2 = (c2 - center).distanceSquared;
+      final Offset c1 = _tcent(m.points, t1);
+      final Offset c2 = _tcent(m.points, t2);
+      final double d1 = (c1 - center).distanceSquared;
+      final double d2 = (c2 - center).distanceSquared;
       return d1.compareTo(d2);
     });
     _orderedTriangles = copy;
@@ -153,7 +151,7 @@ final class FaceMeshRenderable implements Renderable {
     _triProgress = _triProgress.clamp(0.0, maxT);
   }
 
-  Offset _tcent(List<Offset> pts, List<int> tri) {
+  Offset _tcent(final List<Offset> pts, final List<int> tri) {
     final Offset a = pts[tri[0]];
     final Offset b = pts[tri[1]];
     final Offset c = pts[tri[2]];
@@ -190,13 +188,6 @@ final class FaceMeshRenderable implements Renderable {
       final double dy = (p.dy - src.top) * sy + dst.top;
       return Offset(dx, dy);
     };
-  }
-
-  Color _palette(final double t) {
-    final double h = (89.0 + 120.0 * t) % 360.0;
-    final double s = 0.95;
-    final double v = 0.95;
-    return HSVColor.fromAHSV(1.0, h, s, v).toColor();
   }
 
 }

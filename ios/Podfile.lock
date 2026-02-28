@@ -2,15 +2,12 @@ PODS:
   - camera_avfoundation (0.0.1):
     - Flutter
   - Flutter (1.0.0)
-  - flutter_native_splash (2.4.3):
-    - Flutter
   - mediapipe_face_mesh (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
   - Flutter (from `Flutter`)
-  - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
   - mediapipe_face_mesh (from `.symlinks/plugins/mediapipe_face_mesh/ios`)
 
 EXTERNAL SOURCES:
@@ -18,16 +15,13 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/camera_avfoundation/ios"
   Flutter:
     :path: Flutter
-  flutter_native_splash:
-    :path: ".symlinks/plugins/flutter_native_splash/ios"
   mediapipe_face_mesh:
     :path: ".symlinks/plugins/mediapipe_face_mesh/ios"
 
 SPEC CHECKSUMS:
-  camera_avfoundation: 968a9a5323c79a99c166ad9d7866bfd2047b5a9b
+  camera_avfoundation: 769d252259fa21e39ada7399c9dc9c0921af8165
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  flutter_native_splash: c32d145d68aeda5502d5f543ee38c192065986cf
-  mediapipe_face_mesh: 953fb4caa9326e0e6d47d194ea837dd2694f426c
+  mediapipe_face_mesh: 486b08a78691506e385e4eefa7e56c3768f04d23
 
 PODFILE CHECKSUM: ef460edeecccea9f20c5f28ffa5f0a3e590b7549
 

@@ -10,6 +10,17 @@ import 'face_metrics.dart';
 /// public app binary.
 const String _kOpenAIKey = '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';
 
+/// Set to [true] during UI development to skip the API call entirely.
+/// Flip to [false] to re-enable live GPT-4o-mini responses.
+const bool _kMockMode = true;
+
+const String _kMockResponse =
+  'The clarity in your eyes immediately draws the viewer in — there is a quiet '
+  'confidence in your gaze that the camera captures naturally. Your Graceful Balance '
+  'and Captivating Gaze give your face a quietly magnetic quality that feels effortlessly '
+  'composed; side-lighting from the left would beautifully define the natural structure '
+  'of your brow and cheekbone.';
+
 // ---------------------------------------------------------------------------
 // Metric → Positive Label helpers
 // ---------------------------------------------------------------------------
@@ -71,18 +82,13 @@ final class OpenAIService {
   OpenAIService._();
 
   static const String _systemPrompt =
-    'You are a professional portrait photographer and aesthetic enthusiast. '
-    'Your role is to deliver a warm, uplifting "Portrait Insight" that celebrates '
-    'the unique character revealed by the user\'s facial metrics. '
-    'CRITICAL RULES: '
-    '1. Never use negative or comparative words like "low", "poor", "imperfect", or "asymmetrical". '
-    '2. Reframe every metric using the positive label already provided — trust the labels. '
-    '3. Structure your response as a Sandwich: '
-    '   a) Hook — mention one specific soft detail you actually see in the photo '
-    '      (e.g., warm eye colour, expressive brow, or natural smile). '
-    '   b) Insight — connect 1-2 of the provided positive labels to a personality or aesthetic trait. '
-    '   c) Tip — give one concrete style or lighting suggestion that enhances their natural features. '
-    '4. Keep it to 3 sentences maximum. Warm, confident, grounded — not over-the-top flattery.';
+    'You are a warm portrait photographer giving a "Portrait Insight." '
+    'Rules: never use words like "low", "poor", or "asymmetrical"; '
+    'reframe every metric using the positive label given; '
+    'follow the Sandwich: (1) Hook — one specific visual detail you see in the photo, '
+    '(2) Insight — connect 1-2 labels to a personality/aesthetic trait, '
+    '(3) Tip — one concrete style suggestion. '
+    'Max 3 sentences. Warm and confident, not sycophantic.';
 
   /// Sends the captured face image (BGRA bytes) plus positive labels derived
   /// from [FaceMetrics] to GPT-4o-mini in low-resolution mode.
@@ -93,6 +99,11 @@ final class OpenAIService {
     required int imageHeight,
     required int bytesPerRow,
   }) async {
+    // ── Mock mode: skip API call during UI development ──
+    if (_kMockMode) {
+      await Future<void>.delayed(const Duration(milliseconds: 1500));
+      return _kMockResponse;
+    }
     try {
       // 1. Convert BGRA → RGBA
       final Uint8List rgba = _bgraToRgba(bgraPixels, imageWidth, imageHeight, bytesPerRow);
@@ -122,7 +133,7 @@ final class OpenAIService {
         },
         body: jsonEncode({
           'model': 'gpt-4o-mini',
-          'max_tokens': 200,
+          'max_tokens': 130,
           'messages': [
             {'role': 'system', 'content': _systemPrompt},
             {

@@ -63,16 +63,21 @@ final class _ShareSheetContent extends StatefulWidget {
 
 final class _ShareSheetContentState extends State<_ShareSheetContent> {
   final TextEditingController _emailCtrl = TextEditingController();
+  final FocusNode _emailFocus = FocusNode();
   bool _loading = false;
   bool _done = false;
 
   @override
   void dispose() {
     _emailCtrl.dispose();
+    _emailFocus.dispose();
     super.dispose();
   }
 
+  void _dismissKeyboard() => FocusScope.of(context).unfocus();
+
   Future<void> _share() async {
+    _dismissKeyboard();
     if (_loading) return;
     setState(() => _loading = true);
     try {
@@ -95,7 +100,10 @@ final class _ShareSheetContentState extends State<_ShareSheetContent> {
   Widget build(BuildContext context) {
     final double bottomPad = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _dismissKeyboard,
+      child: Container(
       margin: EdgeInsets.only(bottom: bottomPad),
       decoration: const BoxDecoration(
         color: Color(0xFF111118),
@@ -165,9 +173,12 @@ final class _ShareSheetContentState extends State<_ShareSheetContent> {
             ),
             child: TextField(
               controller: _emailCtrl,
+              focusNode: _emailFocus,
               keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
               autocorrect: false,
               style: const TextStyle(color: Colors.white, fontSize: 15),
+              onSubmitted: (_) => _dismissKeyboard(),
               decoration: const InputDecoration(
                 hintText: 'you@example.com',
                 hintStyle: TextStyle(color: Colors.white30),
@@ -231,7 +242,7 @@ final class _ShareSheetContentState extends State<_ShareSheetContent> {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _pill(String label, String value) {

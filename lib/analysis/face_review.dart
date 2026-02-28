@@ -186,7 +186,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                   trailingHint: "Ideal 100%",
                                   icon: Icons.balance_rounded,
                                   explanation: 'Symmetry measures how closely your left and right halves mirror each other (100% = perfect). '
-                                    '${metrics.overallSymmetry >= 90 ? "Your ${metrics.overallSymmetry.toStringAsFixed(1)}% is top-tier — faces above 90% are perceived as classically balanced." : metrics.overallSymmetry >= 80 ? "Your ${metrics.overallSymmetry.toStringAsFixed(1)}% is above the human average of ~85%, reflecting a graceful, natural balance." : "Your ${metrics.overallSymmetry.toStringAsFixed(1)}% gives your face expressive uniqueness — distinct character cameras often love."}',
+                                    '${metrics.overallSymmetry >= 90 ? "Your ${metrics.overallSymmetry.toStringAsFixed(1)}% is top-tier; faces above 90% are perceived as classically balanced." : metrics.overallSymmetry >= 80 ? "Your ${metrics.overallSymmetry.toStringAsFixed(1)}% is above the human average of ~85%, reflecting a graceful, natural balance." : "Your ${metrics.overallSymmetry.toStringAsFixed(1)}% gives your face expressive uniqueness; distinct character cameras often love."}',
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -198,10 +198,10 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                   subtitle: "Eye expression angle",
                                   value:
                                       "${metrics.averageCanthalTilt > 0 ? '+' : ''}${metrics.averageCanthalTilt.toStringAsFixed(1)}°",
-                                  trailingHint: "Ideal +3° – +5°",
+                                  trailingHint: "Ideal +3° to +5°",
                                   icon: Icons.visibility_rounded,
                                   explanation: 'Canthal tilt is the angle between inner and outer eye corners. Positive = upturned, negative = downturned. Ideal: +3° to +5°. '
-                                    '${metrics.averageCanthalTilt >= 3 ? "Your +${metrics.averageCanthalTilt.toStringAsFixed(1)}° is ideal — upturned corners read as alert and attractive." : metrics.averageCanthalTilt >= 0 ? "Your ${metrics.averageCanthalTilt.toStringAsFixed(1)}° is neutral-to-positive — an open, approachable expression." : "Your ${metrics.averageCanthalTilt.toStringAsFixed(1)}° gives a deep, soulful eye shape many find uniquely alluring."}',
+                                    '${metrics.averageCanthalTilt >= 3 ? "Your +${metrics.averageCanthalTilt.toStringAsFixed(1)}° is ideal; upturned corners read as alert and attractive." : metrics.averageCanthalTilt >= 0 ? "Your ${metrics.averageCanthalTilt.toStringAsFixed(1)}° is neutral-to-positive; an open, approachable expression." : "Your ${metrics.averageCanthalTilt.toStringAsFixed(1)}° gives a deep, soulful eye shape many find uniquely alluring."}',
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -214,7 +214,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                   value: metrics.facialThirdsRatio,
                                   trailingHint: "Ideal 1:1:1",
                                   icon: Icons.view_agenda_rounded,
-                                  explanation: 'Divided into three zones: hairline→brow (upper), brow→nose (mid), nose→chin (lower). Ideal is 1:1:1. '
+                                  explanation: 'Divided into three zones: hairline to brow (upper), brow to nose (mid), nose to chin (lower). Ideal is 1:1:1. '
                                     'Your ratio is ${metrics.facialThirdsRatio}. Minor variation is normal and often adds character.',
                                 ),
                               ),
@@ -242,7 +242,7 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                   trailingHint: "Ideal 1.618",
                                   icon: Icons.aspect_ratio_rounded,
                                   explanation: 'The golden ratio (φ = 1.618) measures face width relative to eye span. Your score: ${metrics.horizontalGoldenRatio.toStringAsFixed(3)}. '
-                                    '${(metrics.horizontalGoldenRatio - 1.618).abs() <= 0.05 ? "Remarkably close to the golden standard." : (metrics.horizontalGoldenRatio - 1.618).abs() <= 0.15 ? "Within a natural and attractive range." : "Distinctive proportions — often the foundation of a striking look."}',
+                                    '${(metrics.horizontalGoldenRatio - 1.618).abs() <= 0.05 ? "Remarkably close to the golden standard." : (metrics.horizontalGoldenRatio - 1.618).abs() <= 0.15 ? "Within a natural and attractive range." : "Distinctive proportions; often the foundation of a striking look."}',
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -450,21 +450,20 @@ final class _MetricRowState extends State<_MetricRow> {
           children: [
             Row(children: [
               Container(
-                width: 36, height: 36,
+                width: 48, height: 48,
                 decoration: BoxDecoration(color: const Color(0x22FFFFFF), borderRadius: BorderRadius.circular(12)),
-                child: Icon(widget.icon, color: Colors.white, size: 20),
+                child: Icon(widget.icon, color: Colors.white, size: 32),
               ),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(widget.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, letterSpacing: -0.2)),
+                Text(widget.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, letterSpacing: -0.2, fontSize: 16)),
                 const SizedBox(height: 3),
-                Text(widget.subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.2)),
+                Text(widget.subtitle, style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.2)),
               ])),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text(widget.value, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
-                const SizedBox(height: 2),
-                Text(widget.trailingHint, style: const TextStyle(color: Colors.white54, fontSize: 12, height: 1.1)),
+                Text(widget.value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
+                Text(widget.trailingHint, style: const TextStyle(color: Colors.white54, fontSize: 13, height: 1.1)),
               ]),
               const SizedBox(width: 8),
               AnimatedRotation(turns: _isOpen ? 0.5 : 0, duration: const Duration(milliseconds: 250), curve: Curves.easeOutCubic,
@@ -476,16 +475,891 @@ final class _MetricRowState extends State<_MetricRow> {
               child: _isOpen
                   ? Padding(
                       padding: const EdgeInsets.only(top: 12),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Divider(color: Colors.white.withOpacity(0.08), height: 1),
-                        const SizedBox(height: 10),
-                        Text(widget.explanation, style: const TextStyle(fontSize: 13, color: Colors.white60, height: 1.65)),
-                      ]),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ignore: deprecated_member_use
+                          Divider(color: Colors.white.withOpacity(0.08), height: 1),
+                          const SizedBox(height: 12),
+
+                          _MetricDetailsPanel(
+                            title: widget.title,
+                            subtitle: widget.subtitle,
+                            valueText: widget.value,
+                            trailingHint: widget.trailingHint,
+                            icon: widget.icon,
+                            explanation: widget.explanation,
+                          ),
+                        ],
+                      ),
                     )
                   : const SizedBox.shrink(),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MetricDetailsPanel extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String valueText;
+  final String trailingHint;
+  final IconData icon;
+  final String explanation;
+
+  const _MetricDetailsPanel({
+    required this.title,
+    required this.subtitle,
+    required this.valueText,
+    required this.trailingHint,
+    required this.icon,
+    required this.explanation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final _MetricVisualSpec spec = _MetricVisualSpec.forMetric(title, valueText);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Top "header pill" row
+        Row(
+          children: [
+            _PillIcon(icon: icon),
+            const SizedBox(width: 10),
+            const Text(
+              "What you’re looking at",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.2,
+                fontSize: 14.5,
+              ),
+            ),
+            const Spacer(),
+            _HintChip(text: trailingHint),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Gauge (when numeric)
+        if (spec.kind == _MetricVisualKind.numeric) ...[
+          _MetricGauge(spec: spec),
+          const SizedBox(height: 12),
+          _StackUpRow(spec: spec),
+          const SizedBox(height: 10),
+        ] else if (spec.kind == _MetricVisualKind.thirds) ...[
+          _ThirdsVisualization(spec: spec),
+          const SizedBox(height: 12),
+        ],
+
+        // Explanation card
+        _GlassCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                _SectionDot(),
+                const SizedBox(width: 8),
+                const Text(
+                  "Plain-English explanation",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
+                    fontSize: 14.5,
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 10),
+              Text(
+                explanation,
+                style: TextStyle(
+                  fontSize: 14.5,
+                  color: Colors.white.withOpacity(0.70),
+                  height: 1.45,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.05,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // "Quick takeaway" line (short, friendly)
+              _MiniCallout(
+                label: "Quick takeaway",
+                text: spec.takeaway,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricGauge extends StatelessWidget {
+  final _MetricVisualSpec spec;
+  const _MetricGauge({required this.spec});
+
+  @override
+  Widget build(BuildContext context) {
+    final double p = spec.progress01.clamp(0.0, 1.0);
+    final double idealA = spec.idealStart01.clamp(0.0, 1.0);
+    final double idealB = spec.idealEnd01.clamp(0.0, 1.0);
+    final double idealL = math.min(idealA, idealB);
+    final double idealR = math.max(idealA, idealB);
+
+    return _GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            _SectionDot(),
+            const SizedBox(width: 8),
+            const Text(
+              "Where you land",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.2,
+                fontSize: 14.5,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              spec.valueLabel,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.4,
+                fontSize: 15,
+              ),
+            ),
+          ]),
+          const SizedBox(height: 12),
+
+          // Bar with ideal-range overlay + marker
+          LayoutBuilder(
+            builder: (context, c) {
+              final double w = c.maxWidth;
+              final double barH = 10;
+
+              final double idealX = idealL * w;
+              final double idealW = (idealR - idealL) * w;
+
+              final double markerX = p * w;
+
+              return SizedBox(
+                height: 38,
+                child: Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    // Base track
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: 14,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: Container(
+                          height: barH,
+                          color: Colors.white.withOpacity(0.10),
+                        ),
+                      ),
+                    ),
+
+                    // Ideal band
+                    Positioned(
+                      left: idealX,
+                      top: 14,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: Container(
+                          width: idealW.clamp(6, w),
+                          height: barH,
+                          color: Colors.white.withOpacity(0.22),
+                        ),
+                      ),
+                    ),
+
+                    // Marker (your value)
+                    Positioned(
+                      left: (markerX - 7).clamp(0, w - 14),
+                      top: 9,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(999),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.55),
+                              blurRadius: 10,
+                              offset: const Offset(0, 6),
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Sub-labels
+                    Positioned(
+                      left: 0,
+                      bottom: 0,
+                      child: Text(
+                        spec.minLabel,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.45),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Text(
+                        spec.maxLabel,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.45),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+
+          const SizedBox(height: 10),
+
+          // Ideal hint row
+          Row(
+            children: [
+              _TinyBadge(text: "IDEAL ZONE"),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  spec.idealLabel,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.65),
+                    fontSize: 13,
+                    height: 1.2,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.05,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StackUpRow extends StatelessWidget {
+  final _MetricVisualSpec spec;
+  const _StackUpRow({required this.spec});
+
+  @override
+  Widget build(BuildContext context) {
+    final _MetricVerdict v = spec.verdict;
+
+    return Row(
+      children: [
+        Expanded(
+          child: _MiniMetricTile(
+            title: "Status",
+            value: v.label,
+            icon: v.icon,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _MiniMetricTile(
+            title: "Compared to ideal",
+            value: spec.deltaLabel,
+            icon: Icons.track_changes_rounded,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ThirdsVisualization extends StatelessWidget {
+  final _MetricVisualSpec spec;
+  const _ThirdsVisualization({required this.spec});
+
+  @override
+  Widget build(BuildContext context) {
+    final List<double> parts = spec.thirdsParts;
+    final double sum = parts.fold(0.0, (a, b) => a + b).clamp(1e-6, 1e9);
+    final List<double> norm = parts.map((p) => (p / sum).clamp(0.0, 1.0)).toList();
+
+    Widget bar(double f, String label) {
+      return Expanded(
+        flex: (1000 * f).clamp(1, 1000).toInt(),
+        child: Container(
+          height: 10,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.18),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          alignment: Alignment.center,
+        ),
+      );
+    }
+
+    return _GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            _SectionDot(),
+            const SizedBox(width: 8),
+            const Text(
+              "Proportion map",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.2,
+                fontSize: 14.5,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              spec.valueLabel,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.90),
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.4,
+                fontSize: 14.5,
+              ),
+            ),
+          ]),
+          const SizedBox(height: 12),
+
+          // A clean, monochrome “thirds” bar
+          Row(
+            children: [
+              bar(norm[0], "Upper"),
+              const SizedBox(width: 6),
+              bar(norm[1], "Mid"),
+              const SizedBox(width: 6),
+              bar(norm[2], "Lower"),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          Row(
+            children: [
+              _TinyBadge(text: "IDEAL"),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  "Close to 1:1:1 reads as balanced on camera. Small variation is normal and often looks distinctive.",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.65),
+                    fontSize: 13,
+                    height: 1.25,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.05,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------- Visual model + helpers ----------
+
+enum _MetricVisualKind { numeric, thirds, unknown }
+
+class _MetricVerdict {
+  final String label;
+  final IconData icon;
+  const _MetricVerdict(this.label, this.icon);
+}
+
+class _MetricVisualSpec {
+  final _MetricVisualKind kind;
+
+  // Numeric mode
+  final double? value;
+  final double min;
+  final double max;
+  final double idealMin;
+  final double idealMax;
+  final String unit; // like %, °, ""
+  final bool higherIsBetter;
+
+  // Thirds mode
+  final List<double> thirdsParts;
+
+  final String valueLabel;
+  final String minLabel;
+  final String maxLabel;
+  final String idealLabel;
+  final String takeaway;
+
+  const _MetricVisualSpec._({
+    required this.kind,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.idealMin,
+    required this.idealMax,
+    required this.unit,
+    required this.higherIsBetter,
+    required this.thirdsParts,
+    required this.valueLabel,
+    required this.minLabel,
+    required this.maxLabel,
+    required this.idealLabel,
+    required this.takeaway,
+  });
+
+  double get progress01 {
+    final v = value ?? min;
+    return ((v - min) / (max - min)).clamp(0.0, 1.0);
+  }
+
+  double get idealStart01 => ((idealMin - min) / (max - min)).clamp(0.0, 1.0);
+  double get idealEnd01 => ((idealMax - min) / (max - min)).clamp(0.0, 1.0);
+
+  _MetricVerdict get verdict {
+    if (kind != _MetricVisualKind.numeric || value == null) {
+      return const _MetricVerdict("Readable", Icons.auto_awesome_rounded);
+    }
+    final double v = value!;
+    final bool inIdeal = v >= idealMin && v <= idealMax;
+
+    if (inIdeal) {
+      return const _MetricVerdict("In ideal range", Icons.verified_rounded);
+    }
+
+    // outside ideal: decide “close” vs “far”
+    final double dist = (v < idealMin) ? (idealMin - v) : (v - idealMax);
+    final double band = (idealMax - idealMin).abs().clamp(1e-6, 1e9);
+    final bool close = dist <= band * 0.60;
+
+    if (close) {
+      return const _MetricVerdict("Close to ideal", Icons.insights_rounded);
+    } else {
+      return const _MetricVerdict("Distinctive", Icons.star_rounded);
+    }
+  }
+
+  String get deltaLabel {
+    if (kind != _MetricVisualKind.numeric || value == null) return "—";
+    final double v = value!;
+    final bool inIdeal = v >= idealMin && v <= idealMax;
+    if (inIdeal) return "right on";
+
+    final double target = (v < idealMin) ? idealMin : idealMax;
+    final double d = (v - target).abs();
+    final String dStr = unit.isEmpty ? d.toStringAsFixed(2) : d.toStringAsFixed(1);
+    return "±$dStr$unit";
+  }
+
+  static _MetricVisualSpec forMetric(String title, String valueText) {
+    double? parseFirstNumber(String s) {
+      final m = RegExp(r'[-+]?\d+(\.\d+)?').firstMatch(s);
+      if (m == null) return null;
+      return double.tryParse(m.group(0)!);
+    }
+
+    List<double> parseThirds(String s) {
+      // expects something like "1.0:0.9:1.1" or "1:1:1"
+      final parts = s.split(':').map((e) => double.tryParse(e.trim())).toList();
+      if (parts.length == 3 && parts.every((x) => x != null)) {
+        return parts.map((x) => x!).toList();
+      }
+      return const [1, 1, 1];
+    }
+
+    final String t = title.toLowerCase();
+
+    // Defaults: safe numeric lane if we can parse a number.
+    final double? v = parseFirstNumber(valueText);
+
+    if(t.contains("facial thirds")) {
+      final thirds = parseThirds(valueText);
+      return _MetricVisualSpec._(
+        kind: _MetricVisualKind.thirds,
+        value: null,
+        min: 0,
+        max: 1,
+        idealMin: 0,
+        idealMax: 1,
+        unit: "",
+        higherIsBetter: true,
+        thirdsParts: thirds,
+        valueLabel: valueText,
+        minLabel: "",
+        maxLabel: "",
+        idealLabel: "Ideal ≈ 1:1:1",
+        takeaway: "These ratios are about balance—small variation is normal and often photogenic.",
+      );
+    }
+
+    // Metric-specific “beautiful” ranges
+    if (t.contains("symmetry")) {
+      return _MetricVisualSpec._(
+        kind: _MetricVisualKind.numeric,
+        value: v,
+        min: 60,
+        max: 100,
+        idealMin: 90,
+        idealMax: 100,
+        unit: "%",
+        higherIsBetter: true,
+        thirdsParts: const [1, 1, 1],
+        valueLabel: valueText,
+        minLabel: "60%",
+        maxLabel: "100%",
+        idealLabel: "90–100% reads as very balanced",
+        takeaway: "Think of this as “mirror-balance.” Higher tends to read as more classically even on camera.",
+      );
+    }
+
+    if (t.contains("canthal")) {
+      return _MetricVisualSpec._(
+        kind: _MetricVisualKind.numeric,
+        value: v,
+        min: -8,
+        max: 8,
+        idealMin: 3,
+        idealMax: 5,
+        unit: "°",
+        higherIsBetter: true,
+        thirdsParts: const [1, 1, 1],
+        valueLabel: valueText,
+        minLabel: "-8°",
+        maxLabel: "+8°",
+        idealLabel: "+3° to +5° is the classic “bright” look",
+        takeaway: "Positive tilt reads more lifted/alert; neutral to slightly positive reads open and approachable.",
+      );
+    }
+
+    if (t.contains("golden ratio")) {
+      return _MetricVisualSpec._(
+        kind: _MetricVisualKind.numeric,
+        value: v,
+        min: 1.20,
+        max: 2.00,
+        idealMin: 1.568,
+        idealMax: 1.668,
+        unit: "",
+        higherIsBetter: true,
+        thirdsParts: const [1, 1, 1],
+        valueLabel: valueText,
+        minLabel: "1.20",
+        maxLabel: "2.00",
+        idealLabel: "≈ 1.618 is the historical “golden” target",
+        takeaway: "This is a proportion check (not a beauty verdict). Closer to the band tends to read more ‘harmonic.’",
+      );
+    }
+
+    if (t.contains("lip volume")) {
+      // Treat ideal as 1.6 ± 0.2
+      return _MetricVisualSpec._(
+        kind: _MetricVisualKind.numeric,
+        value: v,
+        min: 0.8,
+        max: 2.2,
+        idealMin: 1.4,
+        idealMax: 1.8,
+        unit: "",
+        higherIsBetter: true,
+        thirdsParts: const [1, 1, 1],
+        valueLabel: valueText,
+        minLabel: "0.8",
+        maxLabel: "2.2",
+        idealLabel: "≈ 1.6 is the “fuller lower lip” classic",
+        takeaway: "A slightly fuller lower lip often reads natural and balanced—small variation is common.",
+      );
+    }
+
+    // Fallback: numeric if parseable, otherwise unknown
+    if (v != null) {
+      return _MetricVisualSpec._(
+        kind: _MetricVisualKind.numeric,
+        value: v,
+        min: v - 1,
+        max: v + 1,
+        idealMin: v - 0.25,
+        idealMax: v + 0.25,
+        unit: "",
+        higherIsBetter: true,
+        thirdsParts: const [1, 1, 1],
+        valueLabel: valueText,
+        minLabel: "low",
+        maxLabel: "high",
+        idealLabel: "ideal band shown for context",
+        takeaway: "Use this as a “shape descriptor.” Your range is meant to explain structure—not label you.",
+      );
+    }
+
+    return _MetricVisualSpec._(
+      kind: _MetricVisualKind.unknown,
+      value: null,
+      min: 0,
+      max: 1,
+      idealMin: 0,
+      idealMax: 1,
+      unit: "",
+      higherIsBetter: true,
+      thirdsParts: const [1, 1, 1],
+      valueLabel: valueText,
+      minLabel: "",
+      maxLabel: "",
+      idealLabel: "",
+      takeaway: "This describes a visual relationship—think of it as “what your face is doing,” not “good vs bad.”",
+    );
+  }
+}
+
+// ---------- Small UI atoms (monochrome, rounded, pretty) ----------
+
+class _GlassCard extends StatelessWidget {
+  final Widget child;
+  const _GlassCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      decoration: BoxDecoration(
+        color: const Color(0x14FFFFFF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0x22FFFFFF), width: 1),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _PillIcon extends StatelessWidget {
+  final IconData icon;
+  const _PillIcon({required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: const Color(0x22FFFFFF),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0x22FFFFFF), width: 1),
+      ),
+      child: Icon(icon, color: Colors.white, size: 18),
+    );
+  }
+}
+
+class _HintChip extends StatelessWidget {
+  final String text;
+  const _HintChip({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0x1AFFFFFF),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0x22FFFFFF), width: 1),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.75),
+          fontWeight: FontWeight.w700,
+          fontSize: 12.5,
+          letterSpacing: -0.1,
+        ),
+      ),
+    );
+  }
+}
+
+class _TinyBadge extends StatelessWidget {
+  final String text;
+  const _TinyBadge({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0x22FFFFFF),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w900,
+          fontSize: 11.5,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionDot extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.55),
+            blurRadius: 8,
+            offset: const Offset(0, 5),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniMetricTile extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+
+  const _MiniMetricTile({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: const Color(0x12FFFFFF),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0x22FFFFFF), width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: const Color(0x22FFFFFF),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Icon(icon, color: Colors.white, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.60),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13.5,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniCallout extends StatelessWidget {
+  final String label;
+  final String text;
+
+  const _MiniCallout({required this.label, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: const Color(0x0FFFFFFF),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0x1FFFFFFF), width: 1),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              color: const Color(0x22FFFFFF),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: const Icon(Icons.lightbulb_rounded, color: Colors.white, size: 15),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.72),
+                  fontSize: 13.5,
+                  height: 1.35,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.05,
+                ),
+                children: [
+                  TextSpan(
+                    text: "$label: ",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  TextSpan(text: text),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

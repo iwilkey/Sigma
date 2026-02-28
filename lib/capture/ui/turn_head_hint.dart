@@ -98,14 +98,14 @@ final class _HintPill extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.question_answer,
+                Icons.question_answer_rounded,
                 size: 28,
                 color: iconColor,
               ),
               const SizedBox(width: 12),
               Flexible(
                 child: Text(
-                  'Turn your head slowly side to side, keeping your face centered and well-lit until it’s detected.',
+                  'Your face should be about eight inches from the camera. Turn your head slowly side to side, keeping your face centered and well-lit until it’s detected.',
                   style: TextStyle(
                     color: textColor,
                     fontSize: 16,

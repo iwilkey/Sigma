@@ -114,7 +114,7 @@ final class FaceMeshRenderable implements Renderable {
     final Paint lpBase = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
-    final Paint pp = Paint()..style = PaintingStyle.fill;
+    final Paint pp = Paint()..style = PaintingStyle.fill..color=Colors.white;
     final int fullCount = _triProgress.floor();
     final double frac = _triProgress - fullCount;
     if(drawPoints && fullCount > 0) {

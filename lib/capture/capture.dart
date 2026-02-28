@@ -48,6 +48,7 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
     _scheduleHintIfNeeded();
     _meshRenderable = FaceMeshRenderable(
       null,
+      pointRadius: 2.0,
       drawTriangles: true,
       drawPoints: true,
       constructionTrianglesPerFrame: 20,

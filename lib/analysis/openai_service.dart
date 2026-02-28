@@ -12,9 +12,9 @@ const String _kOpenAIKey = 'sk-proj-Xp2zgfI8kc93miSgFmrrdQs7DgUjK2czzci2EG5Evwy7
 
 /// Set to [true] during UI development to skip the API call entirely.
 /// Flip to [false] to re-enable live GPT-4o-mini responses.
-const bool _kMockMode = true;
+const bool kMockMode = false;
 
-const String _kMockResponse =
+const String kMockResponse =
   'The clarity in your eyes immediately draws the viewer in — there is a quiet '
   'confidence in your gaze that the camera captures naturally. Your Graceful Balance '
   'and Captivating Gaze give your face a quietly magnetic quality that feels effortlessly '
@@ -100,9 +100,9 @@ final class OpenAIService {
     required int bytesPerRow,
   }) async {
     // ── Mock mode: skip API call during UI development ──
-    if (_kMockMode) {
+    if(kMockMode) {
       await Future<void>.delayed(const Duration(milliseconds: 1500));
-      return _kMockResponse;
+      return kMockResponse;
     }
     try {
       // 1. Convert BGRA → RGBA

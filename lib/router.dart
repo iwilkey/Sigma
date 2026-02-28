@@ -1,21 +1,29 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sigma/capture/capture.dart';
 import 'package:sigma/ephemeral/post_capture.dart';
 import 'package:sigma/inference/face_mesh.dart';
 import 'package:sigma/analysis/face_processor.dart';
 import 'package:sigma/analysis/face_metrics.dart';
-import 'package:sigma/analysis/openai_service.dart';
 import 'package:sigma/ephemeral/disclaimer.dart';
+import 'package:sigma/rendering/gfx.dart';
+import 'package:sigma/rendering/renderables/blur_dots_background_renderable.dart';
 
+/// Author: Ian Wilkey and Barney Jin
 final class Results {
   final FaceMesh mesh;
   final Future<String> aifut;
+  String? full;
   Results({
     required this.mesh,
-    required this.aifut
+    required this.aifut,
+    this.full
   });
 }
 
@@ -26,6 +34,7 @@ final GoRouter SIGMA_ROUTER = GoRouter(
       path: '/',
       pageBuilder: (context, state) => sheetPage(
         state: state,
+        from: SwipeFrom.left,
         child: WelcomeScreen(nextRouteName: "/capture")
       ),
     ),
@@ -33,10 +42,13 @@ final GoRouter SIGMA_ROUTER = GoRouter(
       path: '/capture',
       pageBuilder: (context, state) => sheetPage(
         state: state,
+        from: SwipeFrom.right,
         child: FaceCaptureState(
           onCapturePressed: (final FaceMesh mesh) {
-            final Results res = Results(mesh: mesh, aifut: mockOpenAiResultsFuture());
-            context.push(
+            final Results res = Results(mesh: mesh, aifut: openAiResultsFuture(
+              mesh: mesh
+            ));
+            context.go(
               '/processing',
               extra: res,
             );
@@ -46,12 +58,19 @@ final GoRouter SIGMA_ROUTER = GoRouter(
     ),
     GoRoute(
       path: '/processing',
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final Results res = state.extra! as Results;
-        return ProcessingResultsScreen(
-          mesh: res.mesh,
-          resultsFuture: res.aifut,
-          onSeeFullResults: () => context.pushReplacement('/review', extra: res),
+        return sheetPage(
+          from: SwipeFrom.right,
+          state: state,
+          child: ProcessingResultsScreen(
+            mesh: res.mesh,
+            resultsFuture: res.aifut,
+            onSeeFullResults: (text) {
+              res.full = text;
+              context.go('/review', extra: res);
+            },
+          ),
         );
       },
     ),
@@ -60,64 +79,96 @@ final GoRouter SIGMA_ROUTER = GoRouter(
       pageBuilder: (context, state) {
         final Results res = state.extra! as Results;
         return sheetPage(
+          from: SwipeFrom.right,
           state: state,
-          child: FaceReviewState(mesh: res.mesh),
+          child: FaceReviewState(
+            mesh: res.mesh, 
+            aiResponse: res.full!,
+            onDone: () {
+              context.go('/');
+            },
+          ),
         );
       },
     ),
   ],
 );
 
+enum SwipeFrom { left, right }
+
 CustomTransitionPage<void> sheetPage({
   required GoRouterState state,
   required Widget child,
+  SwipeFrom from = SwipeFrom.right,
 }) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
-    opaque: false,
+    opaque: true,
     barrierDismissible: false,
-    transitionDuration: const Duration(milliseconds: 520),
-    reverseTransitionDuration: const Duration(milliseconds: 420),
+    transitionDuration: const Duration(milliseconds: 420),
+    reverseTransitionDuration: const Duration(milliseconds: 360),
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      final CurvedAnimation c = CurvedAnimation(
+      final CurvedAnimation primary = CurvedAnimation(
         parent: animation,
         curve: Curves.easeOutCubic,
         reverseCurve: Curves.easeInCubic,
       );
-      final Animatable<Offset> s = Tween<Offset>(
-        begin: const Offset(0, 1.0),
+      final double dir = (from == SwipeFrom.right) ? 1.0 : -1.0;
+      final Animation<Offset> inSlide = Tween<Offset>(
+        begin: Offset(dir, 0),
         end: Offset.zero,
-      ).chain(CurveTween(curve: Curves.easeOutCubic));
-      final Animatable<double> sc = Tween<double>(
-        begin: 0.98,
-        end: 1.0,
-      ).chain(CurveTween(curve: Curves.easeOutCubic));
-      final Animation<double> so = Tween<double>(
+      ).animate(primary);
+      final Animation<Offset> outSlide = Tween<Offset>(
+        begin: Offset.zero,
+        end: Offset(-0.18 * dir, 0),
+      ).animate(primary);
+      final Animation<double> shadow = Tween<double>(
         begin: 0.0,
-        end: 0.28,
-      ).animate(c);
+        end: 0.22,
+      ).animate(primary);
       return Stack(
+        fit: StackFit.expand,
         children: [
-          IgnorePointer(
-            child: FadeTransition(
-              opacity: so,
-              child: const ColoredBox(color: Colors.black),
-            ),
+          SlideTransition(
+            position: outSlide,
+            child: const ColoredBox(color: Colors.black),
           ),
           SlideTransition(
-            position: c.drive(s),
-            child: ScaleTransition(
-              scale: c.drive(sc),
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(22),
+            position: inSlide,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                child,
+                IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: shadow,
+                    builder: (context, _) {
+                      return Align(
+                        alignment:
+                            (from == SwipeFrom.right) ? Alignment.centerLeft : Alignment.centerRight,
+                        child: Container(
+                          width: 24,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: (from == SwipeFrom.right)
+                                  ? Alignment.centerLeft
+                                  : Alignment.centerRight,
+                              end: (from == SwipeFrom.right)
+                                  ? Alignment.centerRight
+                                  : Alignment.centerLeft,
+                              colors: [
+                                Colors.black.withOpacity(shadow.value),
+                                Colors.black.withOpacity(0.0),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  child: child,
                 ),
-              ),
+              ],
             ),
           ),
         ],
@@ -126,30 +177,64 @@ CustomTransitionPage<void> sheetPage({
   );
 }
 
+/// Author: Ian Wilkey and Barney Jin
 final class FaceReviewState extends StatefulWidget {
   final FaceMesh mesh;
-  const FaceReviewState({super.key, required this.mesh});
+  final String aiResponse;
+  final VoidCallback onDone;
+  const FaceReviewState({
+    super.key,
+    required this.mesh,
+    required this.aiResponse,
+    required this.onDone,
+  });
   @override
   State<FaceReviewState> createState() => _FaceReviewStateState();
 }
 
-final class _FaceReviewStateState extends State<FaceReviewState> {
+/// Author: Ian Wilkey and Barney Jin
+final class _FaceReviewStateState extends State<FaceReviewState> with SingleTickerProviderStateMixin {
+
+  late final BouncyBlurDotsRenderable _bg;
+  late final Ticker _ticker;
+
+  Duration _last = Duration.zero;
   ui.Image? _image;
   FaceMetrics? _metrics;
-  String? _aiResponse;
-  bool _aiLoading = true;
   String _displayedText = '';
   Timer? _typewriter;
+  bool _showContent = false;
 
   @override
   void initState() {
     super.initState();
     _metrics = FaceProcessor.processLandmarks(
       widget.mesh.points,
-      imageSize: Size(widget.mesh.imageWidth.toDouble(), widget.mesh.imageHeight.toDouble()),
+      imageSize: Size(
+        widget.mesh.imageWidth.toDouble(),
+        widget.mesh.imageHeight.toDouble(),
+      ),
     );
     _decodeImage();
-    _fetchAIAnalysis();
+    _bg = BouncyBlurDotsRenderable(
+      seed: 3,
+      dotCount: 14,
+      blurSigma: 26,
+      speed: 1.0,
+    );
+    _ticker = createTicker((now) {
+      final Duration dt = now - _last;
+      _last = now;
+      if (dt.inMicroseconds <= 0) return;
+      final double dts = (dt.inMicroseconds / 1e6).clamp(0.0, 1 / 20);
+      _bg.tick(dts);
+      if (mounted) setState(() {});
+    })..start();
+    _startTypewriter(widget.aiResponse);
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if(!mounted) return;
+      setState(() => _showContent = true);
+    });
   }
 
   void _decodeImage() {
@@ -165,32 +250,25 @@ final class _FaceReviewStateState extends State<FaceReviewState> {
     );
   }
 
-  Future<void> _fetchAIAnalysis() async {
-    if (_metrics == null) {
-      setState(() => _aiLoading = false);
-      return;
-    }
-    final String? result = await OpenAIService.analyzePortrait(
-      metrics: _metrics!,
-      bgraPixels: widget.mesh.bgraPixels!,
-      imageWidth: widget.mesh.imageWidth,
-      imageHeight: widget.mesh.imageHeight,
-      bytesPerRow: widget.mesh.bytesPerRow,
-    );
-    if (mounted) setState(() { _aiResponse = result; _aiLoading = false; });
-    if (result != null) _startTypewriter(result);
-  }
-
   void _startTypewriter(String text) {
+    _typewriter?.cancel();
+    _displayedText = '';
     int i = 0;
-    _typewriter = Timer.periodic(const Duration(milliseconds: 18), (t) {
-      if (!mounted) { t.cancel(); return; }
-      if (i < text.length) {
-        setState(() => _displayedText = text.substring(0, i + 1));
-        i++;
-      } else {
-        t.cancel();
-      }
+    const Duration tick = Duration(milliseconds: 18);
+    Future<void>.delayed(const Duration(milliseconds: 650), () {
+      if(!mounted) return;
+      _typewriter = Timer.periodic(tick, (t) {
+        if(!mounted) {
+          t.cancel();
+          return;
+        }
+        if(i < text.length) {
+          setState(() => _displayedText = text.substring(0, i + 1));
+          i++;
+        } else {
+          t.cancel();
+        }
+      });
     });
   }
 
@@ -198,140 +276,280 @@ final class _FaceReviewStateState extends State<FaceReviewState> {
   void dispose() {
     _typewriter?.cancel();
     _image?.dispose();
+    _ticker.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final FaceMetrics? metrics = _metrics;
-
+    final MediaQueryData media = MediaQuery.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F13),
-      appBar: AppBar(
-        title: const Text('Analysis Results', style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.5)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => context.pop(),
-          tooltip: 'Recapture',
-        ),
-      ),
-      body: metrics == null
-          ? const Center(child: Text("Error analyzing facial topology.", style: TextStyle(color: Colors.white)))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildTopologyOverlay(metrics),
-                  const SizedBox(height: 32),
-                  _buildMetricsDashboard(metrics),
-                ],
+      backgroundColor: Colors.black,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Gfx.render(_bg),
+          IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.35),
+                    Colors.black.withOpacity(0.70),
+                  ],
+                ),
               ),
             ),
-    );
-  }
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: metrics == null
+                ? const Center(
+                    child: Text(
+                      "Error analyzing facial topology.",
+                      style: TextStyle(color: Colors.white70),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                : Column(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(
+                            parent: AlwaysScrollableScrollPhysics(),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const SizedBox(height: 72,),
+                              _Appear(
+                                show: _showContent,
+                                delay: const Duration(milliseconds: 0),
+                                child: _CircularPortraitCard(
+                                  mesh: widget.mesh,
+                                  image: _image,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              _Appear(
+                                show: _showContent,
+                                delay: const Duration(milliseconds: 90),
+                                child: _AiSnippetCard(
+                                  displayedText: _displayedText,
+                                  showSpinner: _displayedText.isEmpty,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              _Appear(
+                                show: _showContent,
+                                delay: const Duration(milliseconds: 160),
+                                child: _MetricRow(
+                                  title: "Symmetry Match",
+                                  subtitle: "Perceived reflection alignment",
+                                  value: "${metrics.overallSymmetry.toStringAsFixed(1)}%",
+                                  trailingHint: "Ideal 100%",
+                                  icon: Icons.balance_rounded,
+                                  emphasize: true,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              _Appear(
+                                show: _showContent,
+                                delay: const Duration(milliseconds: 200),
+                                child: _MetricRow(
+                                  title: "Canthal Tilt",
+                                  subtitle: "Eye expression angle",
+                                  value:
+                                      "${metrics.averageCanthalTilt > 0 ? '+' : ''}${metrics.averageCanthalTilt.toStringAsFixed(1)}°",
+                                  trailingHint: "Slight positive",
+                                  icon: Icons.visibility_rounded,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              _Appear(
+                                show: _showContent,
+                                delay: const Duration(milliseconds: 240),
+                                child: _MetricRow(
+                                  title: "Facial Thirds",
+                                  subtitle: "Upper : Mid : Lower proportions",
+                                  value: metrics.facialThirdsRatio,
+                                  trailingHint: "Ideal 1:1:1",
+                                  icon: Icons.view_agenda_rounded,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              _Appear(
+                                show: _showContent,
+                                delay: const Duration(milliseconds: 280),
+                                child: _MetricRow(
+                                  title: "Lip Volume",
+                                  subtitle: "Upper vs lower fullness ratio",
+                                  value: metrics.lipVolumeRatio,
+                                  trailingHint: "Ideal 1:1.6",
+                                  icon: Icons.face_retouching_natural_rounded,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              _Appear(
+                                show: _showContent,
+                                delay: const Duration(milliseconds: 320),
+                                child: _MetricRow(
+                                  title: "Golden Ratio",
+                                  subtitle: "Width vs eye span",
+                                  value: metrics.horizontalGoldenRatio.toStringAsFixed(3),
+                                  trailingHint: "Ideal 1.618",
+                                  icon: Icons.aspect_ratio_rounded,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        ),
+                      ),
 
-  Widget _buildTopologyOverlay(FaceMetrics metrics) {
-    return Container(
-      height: 350,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E24),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0x33FFFFFF), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          )
+                      // Bottom button: Done (single callback)
+                      _Appear(
+                        show: _showContent && _displayedText.isNotEmpty,
+                        delay: const Duration(milliseconds: 250),
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            bottom: math.max(0, media.padding.bottom - 12),
+                          ),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 54,
+                            child: OutlinedButton(
+                              onPressed: widget.onDone,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                side: const BorderSide(color: Colors.white, width: 1.5),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: const Text(
+                                "Done",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Center(
-            child: AspectRatio(
-              aspectRatio: widget.mesh.imageWidth / widget.mesh.imageHeight,
-              child: _image != null
-                  ? RawImage(image: _image, fit: BoxFit.fill)
-                  : const Center(child: CircularProgressIndicator(color: Color(0xFF00FFCC))),
+    );
+  }
+}
+
+final class _CircularPortraitCard extends StatelessWidget {
+  final FaceMesh mesh;
+  final ui.Image? image;
+  const _CircularPortraitCard({
+    required this.mesh,
+    required this.image,
+  });
+  @override
+  Widget build(BuildContext context) {
+    final double w = MediaQuery.of(context).size.width;
+    final double diameter = (w * 0.78).clamp(260.0, 360.0);
+    return Center(
+      child: Container(
+        width: diameter,
+        height: diameter,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0x14FFFFFF),
+          border: Border.all(color: const Color(0x22FFFFFF), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.55),
+              blurRadius: 22,
+              offset: const Offset(0, 14),
             ),
+          ],
+        ),
+        child: ClipOval(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if(image != null)
+                FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: mesh.imageWidth.toDouble(),
+                    height: mesh.imageHeight.toDouble(),
+                    child: RawImage(image: image),
+                  ),
+                )
+              else
+                const Center(
+                  child: SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                ),
+              IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.22),
+                        Colors.black.withOpacity(0.06),
+                        Colors.black.withOpacity(0.30),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.10), width: 2),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildMetricsDashboard(FaceMetrics metrics) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // AI Insight card
-        _buildAICard(),
-        const SizedBox(height: 12),
-        _buildMetricCard(
-          title: "Symmetry Match",
-          description: "Perceived reflection alignment",
-          value: "${metrics.overallSymmetry.toStringAsFixed(1)}%",
-          ideal: "100%",
-          icon: Icons.balance,
-          isHero: true,
-        ),
-        const SizedBox(height: 12),
-        _buildMetricCard(
-          title: "Canthal Tilt",
-          description: "Eye expression and biological energy angle",
-          value: "${metrics.averageCanthalTilt > 0 ? '+' : ''}${metrics.averageCanthalTilt.toStringAsFixed(1)}°",
-          ideal: "Slight Positive",
-          icon: Icons.remove_red_eye_outlined,
-        ),
-        const SizedBox(height: 12),
-        _buildMetricCard(
-          title: "Facial Thirds",
-          description: "Upper : Mid : Lower proportions",
-          value: metrics.facialThirdsRatio,
-          ideal: "1:1:1",
-          icon: Icons.format_line_spacing,
-        ),
-        const SizedBox(height: 12),
-        _buildMetricCard(
-          title: "Lip Volume",
-          description: "Upper lip vs Lower lip fullness ratio",
-          value: metrics.lipVolumeRatio,
-          ideal: "1:1.6",
-          icon: Icons.face_retouching_natural,
-        ),
-        const SizedBox(height: 12),
-        _buildMetricCard(
-          title: "Golden Ratio",
-          description: "Horizontal proportion (Width vs Eye Span)",
-          value: metrics.horizontalGoldenRatio.toStringAsFixed(3),
-          ideal: "1.618",
-          icon: Icons.aspect_ratio,
-        ),
-        const SizedBox(height: 32),
-      ],
-    );
-  }
+final class _AiSnippetCard extends StatelessWidget {
+  final String displayedText;
+  final bool showSpinner;
 
-  Widget _buildAICard() {
+  const _AiSnippetCard({
+    required this.displayedText,
+    required this.showSpinner,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF7B2FFF).withValues(alpha: 0.15),
-            const Color(0xFF00FFCC).withValues(alpha: 0.08),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF7B2FFF).withValues(alpha: 0.5),
-          width: 1,
-        ),
+        color: const Color(0x1AFFFFFF),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0x22FFFFFF), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,98 +557,198 @@ final class _FaceReviewStateState extends State<FaceReviewState> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF7B2FFF).withValues(alpha: 0.3),
+                width: 30,
+                height: 30,
+                decoration: const BoxDecoration(
+                  color: Color(0x22FFFFFF),
                   shape: BoxShape.circle,
                 ),
-                child: const Text('✦', style: TextStyle(fontSize: 16, color: Colors.white)),
+                child: const Center(
+                  child: Icon(Icons.auto_awesome_rounded, size: 16, color: Colors.white),
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               const Text(
-                'AI Portrait Analysis',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                "Quick Insight",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
+                ),
               ),
               const Spacer(),
-              if (_aiLoading)
-                const SizedBox(
-                  width: 18, height: 18,
+              AnimatedOpacity(
+                opacity: showSpinner ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 250),
+                child: const SizedBox(
+                  width: 16,
+                  height: 16,
                   child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7B2FFF)),
+                    strokeWidth: 2.2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
-          if (_aiLoading)
-            const Text(
-              'Generating your portrait insight...',
-              style: TextStyle(color: Colors.white54, fontSize: 14, fontStyle: FontStyle.italic),
-            )
-          else if (_aiResponse != null)
-            Text(
-              _displayedText,
-              style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.6),
-            )
-          else
-            const Text(
-              'Unable to reach the AI. Check your API key and network connection.',
-              style: TextStyle(color: Colors.redAccent, fontSize: 13),
+          Text(
+            displayedText.isEmpty ? "Preparing your insight…" : displayedText,
+            style: TextStyle(
+              color: displayedText.isEmpty ? Colors.white70 : Colors.white,
+              fontSize: 14,
+              height: 1.55,
+              fontWeight: FontWeight.w500,
+              letterSpacing: -0.1,
             ),
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildMetricCard({
-    required String title,
-    required String description,
-    required String value,
-    required String ideal,
-    required IconData icon,
-    bool isHero = false,
-  }) {
+final class _MetricRow extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String value;
+  final String trailingHint;
+  final IconData icon;
+  final bool emphasize;
+
+  const _MetricRow({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.trailingHint,
+    required this.icon,
+    this.emphasize = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color border = emphasize ? const Color(0x66FFFFFF) : const Color(0x22FFFFFF);
+    final Color bg = emphasize ? const Color(0x22FFFFFF) : const Color(0x14FFFFFF);
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: isHero ? const Color(0xFF00FFCC).withValues(alpha: 0.1) : const Color(0xFF1E1E24),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-           color: isHero ? const Color(0xFF00FFCC).withValues(alpha: 0.5) : const Color(0x1AFFFFFF),
-           width: 1
-        ),
+        color: bg,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: border, width: 1),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: isHero ? const Color(0xFF00FFCC) : Colors.white12,
-              shape: BoxShape.circle,
+              color: const Color(0x22FFFFFF),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: isHero ? Colors.black : Colors.white, size: 24),
+            child: Icon(icon, color: Colors.white, size: 20),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
-                const SizedBox(height: 4),
-                Text(description, style: const TextStyle(fontSize: 12, color: Colors.white54)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    height: 1.2,
+                  ),
+                ),
               ],
             ),
           ),
+          const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(value, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24, color: isHero ? const Color(0xFF00FFCC) : Colors.white)),
-              const SizedBox(height: 4),
-              Text("Ideal: $ideal", style: const TextStyle(fontSize: 12, color: Colors.white38)),
+              Text(
+                value,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: emphasize ? 22 : 20,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.4,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                trailingHint,
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 12,
+                  height: 1.1,
+                ),
+              ),
             ],
-          )
+          ),
         ],
+      ),
+    );
+  }
+}
+
+final class _Appear extends StatefulWidget {
+  final bool show;
+  final Duration delay;
+  final Widget child;
+  const _Appear({
+    required this.show,
+    required this.delay,
+    required this.child,
+  });
+  @override
+  State<_Appear> createState() => _AppearState();
+}
+
+final class _AppearState extends State<_Appear> {
+  bool _visible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.show) _arm();
+  }
+
+  @override
+  void didUpdateWidget(covariant _Appear oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.show && !_visible) _arm();
+  }
+
+  void _arm() {
+    Future<void>.delayed(widget.delay, () {
+      if (!mounted) return;
+      setState(() => _visible = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: _visible ? 1 : 0,
+      duration: const Duration(milliseconds: 520),
+      curve: Curves.easeOutCubic,
+      child: AnimatedSlide(
+        offset: _visible ? Offset.zero : const Offset(0, 0.02),
+        duration: const Duration(milliseconds: 520),
+        curve: Curves.easeOutCubic,
+        child: widget.child,
       ),
     );
   }

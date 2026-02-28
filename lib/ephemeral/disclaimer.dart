@@ -68,7 +68,7 @@ final class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerPr
       setState(() => _index++);
       return;
     }
-    SIGMA_ROUTER.pushReplacement(widget.nextRouteName);
+    SIGMA_ROUTER.go(widget.nextRouteName);
   }
 
   @override

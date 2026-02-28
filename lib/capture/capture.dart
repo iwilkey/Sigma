@@ -137,7 +137,6 @@ final class _FaceCaptureStateState extends State<FaceCaptureState> {
     _hintTimer?.cancel();
     final CameraController? c = _controller;
     if(c != null) {
-      c.unlockCaptureOrientation();
       if(_streaming && c.value.isStreamingImages) {
         c.stopImageStream();
       }

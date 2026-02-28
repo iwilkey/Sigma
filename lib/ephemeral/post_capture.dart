@@ -3,6 +3,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:sigma/analysis/face_metrics.dart';
+import 'package:sigma/analysis/face_processor.dart';
+import 'package:sigma/analysis/openai_service.dart';
 import 'package:sigma/inference/face_mesh.dart';
 import 'package:sigma/rendering/gfx.dart';
 import 'package:sigma/rendering/renderables/blur_dots_background_renderable.dart';
@@ -11,7 +14,7 @@ import 'package:sigma/rendering/renderables/blur_dots_background_renderable.dart
 final class ProcessingResultsScreen extends StatefulWidget {
   final FaceMesh mesh;
   final Future<String> resultsFuture;
-  final VoidCallback onSeeFullResults;
+  final Function(String) onSeeFullResults;
   const ProcessingResultsScreen({
     super.key,
     required this.mesh,
@@ -33,6 +36,7 @@ final class _ProcessingResultsScreenState extends State<ProcessingResultsScreen>
   String _fullFirstSentence = '';
   String _typed = '';
   Timer? _typeTimer;
+  String? _fullText;
   bool _handledFuture = false;
 
   @override
@@ -60,6 +64,7 @@ final class _ProcessingResultsScreenState extends State<ProcessingResultsScreen>
     _handledFuture = true;
     widget.resultsFuture.then((text) {
       if(!mounted) return;
+      _fullText = text;
       _fullFirstSentence = _firstSentence(text);
       setState(() => _hasResult = true);
       _startTypewriter(delay: const Duration(milliseconds: 250));
@@ -150,7 +155,7 @@ final class _ProcessingResultsScreenState extends State<ProcessingResultsScreen>
           width: double.infinity,
           height: 54,
           child: OutlinedButton(
-            onPressed: _hasResult ? widget.onSeeFullResults : null,
+            onPressed: _hasResult ? () => widget.onSeeFullResults(_fullText!) : null,
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
               side: const BorderSide(color: Colors.white, width: 1.5),
@@ -229,22 +234,39 @@ final class _ProcessingResultsScreenState extends State<ProcessingResultsScreen>
   }
 }
 
-const String _kMockResponse =
-    'The clarity in your eyes immediately draws the viewer in — there is a quiet '
-    'confidence in your gaze that the camera captures naturally. Your Graceful Balance '
-    'and Captivating Gaze give your face a quietly magnetic quality that feels effortlessly '
-    'composed; side-lighting from the left would beautifully define the natural structure '
-    'of your brow and cheekbone.';
-
-/// Simulates an OpenAI round-trip by delaying, then returning a fixed response.
-Future<String> mockOpenAiResultsFuture({
-  Duration minDelay = const Duration(milliseconds: 900),
-  Duration maxDelay = const Duration(milliseconds: 1800),
+Future<String> openAiResultsFuture({
+  required FaceMesh mesh,
+  Duration mockMinDelay = const Duration(milliseconds: 900),
+  Duration mockMaxDelay = const Duration(milliseconds: 1800),
   int seed = 7,
 }) async {
-  // Simple deterministic-ish "jitter" without importing Random:
-  final int spanMs = (maxDelay - minDelay).inMilliseconds;
-  final int jitterMs = spanMs <= 0 ? 0 : (seed * 1103515245 + 12345).abs() % spanMs;
-  await Future<void>.delayed(minDelay + Duration(milliseconds: jitterMs));
-  return _kMockResponse;
+  if(kMockMode) {
+    final int spanMs = (mockMaxDelay - mockMinDelay).inMilliseconds;
+    final int jitterMs = spanMs <= 0 ? 0 : (seed * 1103515245 + 12345).abs() % spanMs;
+    await Future<void>.delayed(mockMinDelay + Duration(milliseconds: jitterMs));
+    return kMockResponse;
+  }
+  final FaceMetrics? metrics = FaceProcessor.processLandmarks(
+    mesh.points,
+    imageSize: Size(mesh.imageWidth.toDouble(), mesh.imageHeight.toDouble()),
+  );
+  if(metrics == null) {
+    throw StateError('Face metrics unavailable');
+  }
+  final bgra = mesh.bgraPixels;
+  if(bgra == null) {
+    throw StateError('No image pixels available (bgraPixels is null)');
+  }
+  final String? result = await OpenAIService.analyzePortrait(
+    metrics: metrics,
+    bgraPixels: bgra,
+    imageWidth: mesh.imageWidth,
+    imageHeight: mesh.imageHeight,
+    bytesPerRow: mesh.bytesPerRow,
+  );
+  if(result == null || result.trim().isEmpty) {
+    throw StateError('OpenAI returned empty response');
+  }
+  return result.trim();
 }
+

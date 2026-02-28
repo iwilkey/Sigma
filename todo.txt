@@ -1,0 +1,23 @@
+Idea: A real-time "attractivness-score" based on statistics of the structure of the human face.
+
+User Story (for now)
+
+- User can open up a special camera state that instantly starts tracking a face (when in view) and
+collects data about the structure of the face
+- Validatation sequence for scanning
+- When scan complete, there will a page that shows their score and the breakdown of the score (like
+all of the math that went into calculating the score) of various aspects of the face, like symmetry,
+proportions, etc. of the face, then give you a full score out of 100.
+
+Tech Stack
+
+- Flutter (Desktop)
+- MediaPipe
+- TensorFlow Lite
+- Math
+
+Pages:
+
+- Pre Scan Page
+- Scan Page
+- Post Scan Page

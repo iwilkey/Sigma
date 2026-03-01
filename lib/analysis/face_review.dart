@@ -1510,106 +1510,133 @@ final class _AppearState extends State<_Appear> {
 
 // ── Tier Badge Card ───────────────────────────────────────────────────────────
 
-final class _TierBadgeCard extends StatelessWidget {
+final class _TierBadgeCard extends StatefulWidget {
   final FaceMetrics metrics;
   const _TierBadgeCard({required this.metrics});
 
   @override
+  State<_TierBadgeCard> createState() => _TierBadgeCardState();
+}
+
+final class _TierBadgeCardState extends State<_TierBadgeCard> {
+  bool _isOpen = false;
+
+  @override
   Widget build(BuildContext context) {
-    final FaceTierResult result = FaceTierCalculator.compute(metrics);
+    final FaceTierResult result = FaceTierCalculator.compute(widget.metrics);
     final FaceTier tier = result.tier;
     final Color tierColor = tier.color;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF111118),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: tierColor.withOpacity(0.35), width: 1.2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Top row: letter + score + headline ───────────────────────────
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Big tier letter
-              Container(
-                width: 56, height: 56,
-                decoration: BoxDecoration(
-                  color: tierColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: tierColor.withOpacity(0.5), width: 1.4),
-                ),
-                child: Center(
-                  child: Text(
-                    tier.letter,
-                    style: TextStyle(
-                      color: tierColor,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -1,
+    return GestureDetector(
+      onTap: () => setState(() => _isOpen = !_isOpen),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0x11FFFFFF), // dark yet transparent
+          borderRadius: BorderRadius.circular(20),
+          // No border color as requested
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Top row: letter + score + headline ───────────────────────────
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Big tier letter
+                Container(
+                  width: 56, height: 56,
+                  decoration: BoxDecoration(
+                    color: tierColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: tierColor.withOpacity(0.5), width: 1.4),
+                  ),
+                  child: Center(
+                    child: Text(
+                      tier.letter,
+                      style: TextStyle(
+                        color: tierColor,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tier.headline,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        tier.subtitle,
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 12,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Score badge
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      tier.headline,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.3,
+                      result.totalScore.toStringAsFixed(1),
+                      style: TextStyle(
+                        color: tierColor,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 3),
                     Text(
-                      tier.subtitle,
-                      style: const TextStyle(
-                        color: Colors.white60,
-                        fontSize: 12,
-                        height: 1.3,
+                      '/ 100',
+                      style: TextStyle(
+                        color: tierColor.withOpacity(0.55),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
+              ],
+            ),
+            
+            // Expandable metric breakdown
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: double.infinity,
+                child: _isOpen 
+                  ? Column(
+                      children: [
+                        const SizedBox(height: 18),
+                        _TierMetricBars(result: result, tierColor: tierColor),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
               ),
-              const SizedBox(width: 12),
-              // Score badge
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    result.totalScore.toStringAsFixed(1),
-                    style: TextStyle(
-                      color: tierColor,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  Text(
-                    '/ 100',
-                    style: TextStyle(
-                      color: tierColor.withOpacity(0.55),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          // ── Mini metric bar breakdown ─────────────────────────────────────
-          _TierMetricBars(result: result, tierColor: tierColor),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

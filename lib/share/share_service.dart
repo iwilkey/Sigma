@@ -10,6 +10,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
 import 'package:sigma/analysis/face_metrics.dart';
+import 'package:sigma/analysis/face_tier.dart';
 
 /// Author: Barney Jin and Ian Wilkey
 final class ShareService {
@@ -214,6 +215,9 @@ final class ShareService {
                               pw.SizedBox(height: 24),
                               pw.Divider(color: white40, thickness: 0.4),
                               pw.SizedBox(height: 16),
+                               pw.SizedBox(height: 16),
+                              _buildTierBadge(metrics, surface, accent, white, white70),
+                              pw.SizedBox(height: 16),
                               _buildHarmonyBadge(metrics, surface, accent, white, white70),
                             ],
                           ),
@@ -316,6 +320,73 @@ final class ShareService {
           pw.Text(_asciiHuman(label), style: pw.TextStyle(color: white, fontSize: 14, fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 4),
           pw.Text('Based on Portrait Harmony Framework', style: pw.TextStyle(color: white70, fontSize: 8)),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _buildTierBadge(
+    FaceMetrics metrics,
+    PdfColor surface,
+    PdfColor accent,
+    PdfColor white,
+    PdfColor white70,
+  ) {
+    final FaceTierResult result = FaceTierCalculator.compute(metrics);
+    final FaceTier tier = result.tier;
+    
+    final PdfColor tierColor = switch(tier) {
+      FaceTier.s => const PdfColor.fromInt(0xFFFFD700),
+      FaceTier.a => const PdfColor.fromInt(0xFF00FFCC),
+      FaceTier.b => const PdfColor.fromInt(0xFF6E9EFF),
+      FaceTier.c => const PdfColor.fromInt(0xFFAAAAAA),
+    };
+
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(16),
+      decoration: pw.BoxDecoration(
+        color: surface,
+        borderRadius: pw.BorderRadius.circular(12),
+        border: pw.Border.all(color: tierColor, width: 1.2),
+      ),
+      child: pw.Row(
+        children: <pw.Widget>[
+          pw.Container(
+            width: 44,
+            height: 44,
+            decoration: pw.BoxDecoration(
+              color: tierColor.withOpacity(0.1),
+              borderRadius: pw.BorderRadius.circular(8),
+              border: pw.Border.all(color: tierColor, width: 1),
+            ),
+            child: pw.Center(
+              child: pw.Text(
+                tier.letter,
+                style: pw.TextStyle(color: tierColor, fontSize: 24, fontWeight: pw.FontWeight.bold),
+              ),
+            ),
+          ),
+          pw.SizedBox(width: 14),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: <pw.Widget>[
+                pw.Text(_asciiHuman(tier.headline), style: pw.TextStyle(color: white, fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 2),
+                pw.Text(_asciiHuman(tier.subtitle), style: pw.TextStyle(color: white70, fontSize: 8)),
+              ],
+            ),
+          ),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: <pw.Widget>[
+              pw.Text(
+                result.totalScore.toStringAsFixed(1),
+                style: pw.TextStyle(color: tierColor, fontSize: 18, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.Text('/ 100', style: pw.TextStyle(color: white70, fontSize: 8)),
+            ],
+          ),
         ],
       ),
     );

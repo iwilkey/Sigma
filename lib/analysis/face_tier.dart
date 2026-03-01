@@ -118,7 +118,7 @@ abstract final class FaceTierCalculator {
 
   /// Distance from φ (1.618). Each 0.0125 away costs 1 pt.
   static double _goldenScore(double ratio) =>
-      (20.0 - (ratio - 1.618).abs() * 80.0).clamp(0.0, 20.0);
+      (20.0 - (ratio - 1.618).abs() * 45.0).clamp(0.0, 20.0);
 
   /// Variance of [upper, mid, lower] proportions (already raw doubles).
   /// Perfect thirds → variance ≈ 0 → 20 pts.

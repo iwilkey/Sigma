@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'face_metrics.dart';
 
-const String _kOpenAIKey = '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';
+String get _kOpenAIKey => dotenv.env['OPENAI_API_KEY'] ?? 'sk-placeholder';
 
 const bool kMockMode = false;
 

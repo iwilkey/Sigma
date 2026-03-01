@@ -20,6 +20,7 @@ dependencies:
   pdf: ^3.11.2
   path_provider: ^2.1.5
   share_plus: ^10.0.0
+  flutter_dotenv: ^5.1.0
 
 dependency_overrides:
   image: ^4.8.0
@@ -47,3 +48,4 @@ flutter:
     - assets/icon.png
     - assets/Inter-Regular.ttf
     - assets/Inter-Bold.ttf
+    - .env

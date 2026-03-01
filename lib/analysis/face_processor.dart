@@ -36,8 +36,11 @@ final class FaceProcessor {
     final Offset rightEyeOuter = landmarks[263];
     final Offset leftEyeInner = landmarks[133];
     final Offset rightEyeInner = landmarks[362];
-    final Offset brow = landmarks[9];
-    final Offset noseBase = landmarks[2];
+    final Offset brow = Offset(
+      (landmarks[105].dx + landmarks[334].dx) / 2,   // avg left/right eyebrow top
+      (landmarks[105].dy + landmarks[334].dy) / 2,
+    );
+    final Offset noseBase = landmarks[94];            // sub-nasal point (bottom of nose)
     final Offset faceLeft = landmarks[234];
     final Offset faceRight = landmarks[454];
     final Offset upperLipTop = landmarks[0];

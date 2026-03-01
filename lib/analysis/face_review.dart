@@ -11,6 +11,7 @@ import 'package:sigma/analysis/face_processor.dart';
 import 'package:sigma/inference/face_mesh.dart';
 import 'package:sigma/rendering/gfx.dart';
 import 'package:sigma/rendering/renderables/blur_dots_background_renderable.dart';
+import 'package:sigma/analysis/face_tier.dart';
 import 'package:sigma/share/share_sheet.dart';
 
 /// Author: Ian Wilkey and Barney Jin
@@ -206,6 +207,12 @@ final class _FaceReviewStateState extends State<FaceReviewState> with SingleTick
                                 ),
                               ]),
                               const SizedBox(height: 14),
+                              _Appear(
+                                show: _showContent,
+                                delay: const Duration(milliseconds: 60),
+                                child: _TierBadgeCard(metrics: metrics),
+                              ),
+                              const SizedBox(height: 10),
                               _Appear(
                                 show: _showContent,
                                 delay: const Duration(milliseconds: 90),
@@ -1497,6 +1504,210 @@ final class _AppearState extends State<_Appear> {
         curve: Curves.easeOutCubic,
         child: widget.child,
       ),
+    );
+  }
+}
+
+// ── Tier Badge Card ───────────────────────────────────────────────────────────
+
+final class _TierBadgeCard extends StatefulWidget {
+  final FaceMetrics metrics;
+  const _TierBadgeCard({required this.metrics});
+
+  @override
+  State<_TierBadgeCard> createState() => _TierBadgeCardState();
+}
+
+final class _TierBadgeCardState extends State<_TierBadgeCard> {
+  bool _isOpen = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final FaceTierResult result = FaceTierCalculator.compute(widget.metrics);
+    final FaceTier tier = result.tier;
+    final Color tierColor = tier.color;
+
+    return GestureDetector(
+      onTap: () => setState(() => _isOpen = !_isOpen),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0x11FFFFFF), // dark yet transparent
+          borderRadius: BorderRadius.circular(20),
+          // No border color as requested
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Top row: letter + score + headline ───────────────────────────
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Big tier letter
+                Container(
+                  width: 56, height: 56,
+                  decoration: BoxDecoration(
+                    color: tierColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: tierColor.withOpacity(0.5), width: 1.4),
+                  ),
+                  child: Center(
+                    child: Text(
+                      tier.letter,
+                      style: TextStyle(
+                        color: tierColor,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tier.headline,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        tier.subtitle,
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 12,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Score badge
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      result.totalScore.toStringAsFixed(1),
+                      style: TextStyle(
+                        color: tierColor,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      '/ 100',
+                      style: TextStyle(
+                        color: tierColor.withOpacity(0.55),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            
+            // Expandable metric breakdown
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: double.infinity,
+                child: _isOpen 
+                  ? Column(
+                      children: [
+                        const SizedBox(height: 18),
+                        _TierMetricBars(result: result, tierColor: tierColor),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+final class _TierMetricBars extends StatelessWidget {
+  final FaceTierResult result;
+  final Color tierColor;
+  const _TierMetricBars({required this.result, required this.tierColor});
+
+  @override
+  Widget build(BuildContext context) {
+    final List<(String, double)> bars = [
+      ('Symmetry',    result.symmetryScore),
+      ('Canthal',     result.canthalScore),
+      ('Golden φ',    result.goldenScore),
+      ('Thirds',      result.thirdsScore),
+      ('Lips',        result.lipScore),
+    ];
+    return Column(
+      children: bars.map((item) {
+        final String label = item.$1;
+        final double score = item.$2;
+        final double frac  = (score / 20.0).clamp(0.0, 1.0);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 7),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 58,
+                child: Text(
+                  label,
+                  style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w500),
+                ),
+              ),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (_, c) => Stack(
+                    children: [
+                      Container(
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                      Container(
+                        height: 6,
+                        width: c.maxWidth * frac,
+                        decoration: BoxDecoration(
+                          color: tierColor.withOpacity(0.75),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 34,
+                child: Text(
+                  score.toStringAsFixed(1),
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

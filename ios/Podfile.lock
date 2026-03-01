@@ -29,11 +29,11 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/share_plus/ios"
 
 SPEC CHECKSUMS:
-  camera_avfoundation: 968a9a5323c79a99c166ad9d7866bfd2047b5a9b
+  camera_avfoundation: 769d252259fa21e39ada7399c9dc9c0921af8165
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  flutter_native_splash: c32d145d68aeda5502d5f543ee38c192065986cf
-  mediapipe_face_mesh: 953fb4caa9326e0e6d47d194ea837dd2694f426c
-  share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
+  flutter_native_splash: df59bb2e1421aa0282cb2e95618af4dcb0c56c29
+  mediapipe_face_mesh: 486b08a78691506e385e4eefa7e56c3768f04d23
+  share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
 
 PODFILE CHECKSUM: ef460edeecccea9f20c5f28ffa5f0a3e590b7549
 

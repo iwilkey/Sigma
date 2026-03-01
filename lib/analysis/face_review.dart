@@ -1244,12 +1244,9 @@ class _MetricVisualSpec {
   }
 }
 
-// ---------- Small UI atoms (monochrome, rounded, pretty) ----------
-
 class _GlassCard extends StatelessWidget {
   final Widget child;
   const _GlassCard({required this.child});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1508,12 +1505,9 @@ final class _AppearState extends State<_Appear> {
   }
 }
 
-// ── Tier Badge Card ───────────────────────────────────────────────────────────
-
 final class _TierBadgeCard extends StatefulWidget {
   final FaceMetrics metrics;
   const _TierBadgeCard({required this.metrics});
-
   @override
   State<_TierBadgeCard> createState() => _TierBadgeCardState();
 }
@@ -1526,7 +1520,6 @@ final class _TierBadgeCardState extends State<_TierBadgeCard> {
     final FaceTierResult result = FaceTierCalculator.compute(widget.metrics);
     final FaceTier tier = result.tier;
     final Color tierColor = tier.color;
-
     return GestureDetector(
       onTap: () => setState(() => _isOpen = !_isOpen),
       child: AnimatedContainer(
@@ -1534,18 +1527,16 @@ final class _TierBadgeCardState extends State<_TierBadgeCard> {
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0x11FFFFFF), // dark yet transparent
+          color: const Color(0x11FFFFFF),
           borderRadius: BorderRadius.circular(20),
           // No border color as requested
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Top row: letter + score + headline ───────────────────────────
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Big tier letter
                 Container(
                   width: 56, height: 56,
                   decoration: BoxDecoration(
@@ -1592,7 +1583,6 @@ final class _TierBadgeCardState extends State<_TierBadgeCard> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Score badge
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -1617,8 +1607,6 @@ final class _TierBadgeCardState extends State<_TierBadgeCard> {
                 ),
               ],
             ),
-            
-            // Expandable metric breakdown
             AnimatedSize(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutCubic,
@@ -1646,7 +1634,6 @@ final class _TierMetricBars extends StatelessWidget {
   final FaceTierResult result;
   final Color tierColor;
   const _TierMetricBars({required this.result, required this.tierColor});
-
   @override
   Widget build(BuildContext context) {
     final List<(String, double)> bars = [

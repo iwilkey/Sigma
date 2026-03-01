@@ -341,7 +341,7 @@ final class ShareService {
       FaceTier.b => const PdfColor.fromInt(0xFF6E9EFF),
       FaceTier.c => const PdfColor.fromInt(0xFFAAAAAA),
     };
-
+    final PdfColor bg = PdfColor(tierColor.red, tierColor.green, tierColor.blue, 0.10);
     return pw.Container(
       padding: const pw.EdgeInsets.all(16),
       decoration: pw.BoxDecoration(
@@ -355,14 +355,14 @@ final class ShareService {
             width: 44,
             height: 44,
             decoration: pw.BoxDecoration(
-              color: tierColor.withOpacity(0.1),
+              color: bg,
               borderRadius: pw.BorderRadius.circular(8),
               border: pw.Border.all(color: tierColor, width: 1),
             ),
             child: pw.Center(
               child: pw.Text(
                 tier.letter,
-                style: pw.TextStyle(color: tierColor, fontSize: 24, fontWeight: pw.FontWeight.bold),
+                style: pw.TextStyle(color: PdfColor.fromInt(0xffffffff), fontSize: 24, fontWeight: pw.FontWeight.bold),
               ),
             ),
           ),
@@ -424,7 +424,7 @@ final class ShareService {
   }
 
   static String _formatCanthalDeg(double tiltDeg) {
-    final String sign = tiltDeg > 0 ? '+ ' : tiltDeg < 0 ? '- ' : '';
+    final String sign = tiltDeg > 0 ? '+' : tiltDeg < 0 ? '-' : '';
     return '$sign${tiltDeg.abs().toStringAsFixed(1)} deg.';
   }
 
